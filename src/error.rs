@@ -1,9 +1,12 @@
+use std::path::PathBuf;
 use std::{error, fmt, io, result, str};
 
 use ::goblin::error as goblin;
 
 #[derive(Debug)]
 pub enum Error {
+    InvalidDestination(PathBuf),
+    NonEmptyDestionation(PathBuf),
     SharedLibraryLookup(String),
     ResolverCompilation(String),
     MalformedExecutable(String),
@@ -17,6 +20,12 @@ pub type Result<T> = result::Result<T, Error>;
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
+            Error::InvalidDestination(path) => {
+                write!(f, "The destination is invalid: {}", path.display())
+            }
+            Error::NonEmptyDestionation(path) => {
+                write!(f, "The destination is not empty: {}", path.display())
+            }
             Error::SharedLibraryLookup(e) => write!(f, "Unable to lookup shared library: {}", e),
             Error::ResolverCompilation(e) => write!(
                 f,
