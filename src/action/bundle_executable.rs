@@ -10,7 +10,7 @@ pub fn bundle_executable(
 
     match install_path {
         Some(mut path) => {
-            if path.ends_with("/") {
+            if path.ends_with('/') {
                 // unwrap is ok because `executable_path` here is canonicalized
                 let file_name = executable_path.file_name().unwrap();
                 let file_name_str = file_name

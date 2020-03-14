@@ -23,15 +23,12 @@ That's it! The resulting image only contains what your executable requires at ru
 magicpak [OPTIONS...] PATH
 
   -t  --test COMMAND      enable testing
-  -d  --dynamic [COMMAND] enable dynamic analysis (command defaults to -t)
+  -d  --dynamic [COMMAND] enable dynamic analysis (command defaults to -t if omitted)
   -i  --include GLOB      additionally include file/directory
   -e  --exclude GLOB      exclude file/directory from the distribution
   --mkdir PATH            create file/directory in the distribution
   -u  --upx [OPTIONS..]   run upx on executables (requires upx)
-  -l  --include-locales [LOCALE...]  include locale files
   -r  --install-to PATH   specify installation path of the binary in the distribution
-  --toralent              error toralent mode
-  -d  --dry-run           change nothing in wild but log them
   -v  --verbose           verbose mode
 ```
 

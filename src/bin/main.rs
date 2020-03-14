@@ -43,7 +43,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     action::bundle_executable(&mut bundle, &exe, opt.install_to)?;
 
     for dir in opt.mkdir {
-        action::make_directory(&mut bundle, dir);
+        action::make_directory(&mut bundle, &dir);
     }
 
     for glob in opt.include {
