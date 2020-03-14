@@ -15,6 +15,10 @@ struct Opt {
     #[structopt(parse(from_os_str))]
     /// Output destination
     output: PathBuf,
+
+    #[structopt(short, long)]
+    /// additionally include file/directory with glob patterns.
+    include: Vec<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -25,6 +29,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
     action::bundle_executable(&mut bundle, &exe)?;
+
+    for glob in opt.include {
+        action::include_glob(&mut bundle, &glob)?;
+    }
 
     action::emit(&mut bundle, opt.output)?;
 

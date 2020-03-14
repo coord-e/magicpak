@@ -7,6 +7,7 @@ use ::goblin::error as goblin;
 pub enum Error {
     InvalidDestination(PathBuf),
     NonEmptyDestionation(PathBuf),
+    InvalidGlobPattern(String),
     SharedLibraryLookup(String),
     ResolverCompilation(String),
     MalformedExecutable(String),
@@ -26,6 +27,7 @@ impl fmt::Display for Error {
             Error::NonEmptyDestionation(path) => {
                 write!(f, "The destination is not empty: {}", path.display())
             }
+            Error::InvalidGlobPattern(e) => write!(f, "Invalid glob pattern: {}", e),
             Error::SharedLibraryLookup(e) => write!(f, "Unable to lookup shared library: {}", e),
             Error::ResolverCompilation(e) => write!(
                 f,
@@ -70,5 +72,11 @@ impl From<goblin::Error> for Error {
             }
             goblin::Error::IO(e) => Error::IO(e),
         }
+    }
+}
+
+impl From<glob::PatternError> for Error {
+    fn from(err: glob::PatternError) -> Self {
+        Error::InvalidGlobPattern(err.msg.to_string())
     }
 }
