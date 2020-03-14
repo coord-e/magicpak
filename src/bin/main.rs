@@ -24,6 +24,10 @@ struct Opt {
     /// exclude file/directory from the bundle with glob patterns.
     exclude: Vec<String>,
 
+    #[structopt(long)]
+    /// make directories in the resulting bundle
+    mkdir: Vec<String>,
+
     #[structopt(short = "r", long)]
     /// specify installation path of the executable in the bundle
     install_to: Option<String>,
@@ -37,6 +41,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
     action::bundle_executable(&mut bundle, &exe, opt.install_to)?;
+
+    for dir in opt.mkdir {
+        action::make_directory(&mut bundle, dir);
+    }
 
     for glob in opt.include {
         action::include_glob(&mut bundle, &glob)?;

@@ -75,7 +75,7 @@ impl Bundle {
     {
         for (bpath, source) in self.entries.iter() {
             match source {
-                Source::NewDirectory => fs::create_dir(bpath.reify(&dest))?,
+                Source::NewDirectory => fs::create_dir_all(bpath.reify(&dest))?,
                 Source::NewFile(blob) => fs::write(bpath.reify(&dest), blob)?,
                 Source::CopyFrom(src_path) => {
                     sync_copy(src_path, bpath, dest.as_ref())?;
