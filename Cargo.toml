@@ -15,9 +15,9 @@ readme = "README.md"
 name = "magicpak"
 path = "src/bin/main.rs"
 
-# [lib]
-# name = "magicpak"
-# path = "src/magicpak.rs"
+[lib]
+name = "magicpak"
+path = "src/magicpak.rs"
 
 [dependencies]
 goblin = "0.2"
