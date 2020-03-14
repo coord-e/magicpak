@@ -19,7 +19,7 @@ impl BundlePath {
     where
         P: AsRef<Path> + 'a,
     {
-        let path = p.as_ref().strip_prefix("/").unwrap_or(p.as_ref());
+        let path = p.as_ref().strip_prefix("/").unwrap_or_else(|_| p.as_ref());
         BundlePath::new(path)
     }
 

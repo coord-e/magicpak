@@ -13,7 +13,7 @@ where
         if !dest.is_dir() {
             return Err(Error::InvalidDestination(dest.to_owned()));
         }
-        if !dest.read_dir()?.next().is_none() {
+        if dest.read_dir()?.next().is_some() {
             return Err(Error::NonEmptyDestionation(dest.to_owned()));
         }
     } else {

@@ -5,13 +5,13 @@ use std::path::{Path, PathBuf};
 use crate::domain::{BundlePath, BundlePathBuf};
 use crate::error::Result;
 
-#[derive(Debug)]
 enum Source {
     NewDirectory,
     NewFile(Vec<u8>),
     CopyFrom(PathBuf),
 }
 
+#[derive(Default)]
 pub struct Bundle {
     entries: HashMap<BundlePathBuf, Source>,
 }

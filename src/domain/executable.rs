@@ -44,10 +44,7 @@ impl Executable<'_> {
                 ..
             } => {
                 let resolver = resolver::Resolver::new(interp, self.rpaths()?)?;
-                libraries
-                    .into_iter()
-                    .map(|lib| resolver.lookup(&lib))
-                    .collect()
+                libraries.iter().map(|lib| resolver.lookup(&lib)).collect()
             }
             _ => Ok(Vec::new()),
         }

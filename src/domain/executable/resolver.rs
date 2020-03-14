@@ -7,22 +7,7 @@ use crate::error::{Error, Result};
 
 use tempfile::{NamedTempFile, TempPath};
 
-pub struct Resolver {
-    program_path: TempPath,
-}
-
-impl Resolver {
-    pub fn new<P, Q, I>(interp: P, rpaths: I) -> Result<Self>
-    where
-        P: AsRef<Path>,
-        I: IntoIterator<Item = Q>,
-        Q: AsRef<Path>,
-    {
-        let mut source = NamedTempFile::new()?;
-        write!(
-            source,
-            "{}",
-            r"
+static RESOLVER_SOURCE_CODE: &str = r"
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <link.h>
@@ -43,9 +28,21 @@ int main(int argc, char** argv) {
   }
   puts(link_map->l_name);
   dlclose(handle);
+}";
+
+pub struct Resolver {
+    program_path: TempPath,
 }
-"
-        )?;
+
+impl Resolver {
+    pub fn new<P, Q, I>(interp: P, rpaths: I) -> Result<Self>
+    where
+        P: AsRef<Path>,
+        I: IntoIterator<Item = Q>,
+        Q: AsRef<Path>,
+    {
+        let mut source = NamedTempFile::new()?;
+        write!(source, "{}", RESOLVER_SOURCE_CODE)?;
         let source_path = source.into_temp_path();
         let program_path = NamedTempFile::new()?.into_temp_path();
         let output = Command::new("gcc")
