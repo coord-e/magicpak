@@ -1,3 +1,4 @@
+use std::ffi::OsString;
 use std::path::PathBuf;
 use std::{error, fmt, io, result, str};
 
@@ -13,6 +14,7 @@ pub enum Error {
     MalformedExecutable(String),
     ValueNotFoundInStrtab { tag: u64, val: u64 },
     Encoding(str::Utf8Error),
+    PathEncoding(OsString),
     IO(io::Error),
 }
 
@@ -41,6 +43,11 @@ impl fmt::Display for Error {
                 val, tag
             ),
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
+            Error::PathEncoding(p) => write!(
+                f,
+                "Unable to interpret the path as UTF-8: {}",
+                p.to_string_lossy()
+            ),
             Error::IO(e) => write!(f, "IO error: {}", e),
         }
     }
