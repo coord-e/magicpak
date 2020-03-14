@@ -19,6 +19,10 @@ struct Opt {
     #[structopt(short, long)]
     /// additionally include file/directory with glob patterns.
     include: Vec<String>,
+
+    #[structopt(short, long)]
+    /// exclude file/directory from the bundle with glob patterns.
+    exclude: Vec<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -32,6 +36,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for glob in opt.include {
         action::include_glob(&mut bundle, &glob)?;
+    }
+
+    for glob in opt.exclude {
+        action::exclude_glob(&mut bundle, &glob)?;
     }
 
     action::emit(&mut bundle, opt.output)?;

@@ -1,4 +1,4 @@
-use std::borrow::Borrow;
+use std::borrow::{Borrow, Cow};
 use std::ffi::{OsStr, OsString};
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
@@ -27,6 +27,10 @@ impl BundlePath {
         BundlePathBuf {
             inner: self.inner.to_os_string(),
         }
+    }
+
+    pub fn to_str_lossy(&self) -> Cow<str> {
+        self.inner.to_string_lossy()
     }
 
     pub fn reify<P>(&self, dist: P) -> PathBuf

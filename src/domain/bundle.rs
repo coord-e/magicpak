@@ -44,6 +44,8 @@ impl Bundle {
         P: AsRef<BundlePath>,
         Q: AsRef<Path>,
     {
+        debug_assert!(from.as_ref().is_absolute());
+
         self.entries.insert(
             path.as_ref().to_owned(),
             Source::CopyFrom(from.as_ref().to_owned()),
@@ -55,6 +57,16 @@ impl Bundle {
         R: Resource,
     {
         resource.bundle_to(self);
+    }
+
+    pub fn filter<P>(&mut self, predicate: P)
+    where
+        P: FnMut(&BundlePathBuf) -> bool,
+    {
+        let mut predicate = predicate;
+        let entries = std::mem::replace(&mut self.entries, HashMap::default());
+        let updated = entries.into_iter().filter(|(k, _)| predicate(k)).collect();
+        std::mem::replace(&mut self.entries, updated);
     }
 
     pub fn emit<P>(&mut self, dest: P) -> Result<()>
