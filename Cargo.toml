@@ -1,0 +1,25 @@
+[package]
+name = "magicpak"
+version = "0.1.0"
+authors = ["coord.e <me@coord-e.com>"]
+edition = "2018"
+license = "MIT OR Apache-2.0"
+description = "Build minimal docker images for free"
+homepage = "https://github.com/coord-e/magicpak"
+repository = "https://github.com/coord-e/magicpak"
+keywords = ["docker"]
+categories = ["development-tools"]
+readme = "README.md"
+
+[[bin]]
+name = "magicpak"
+path = "src/bin/main.rs"
+
+# [lib]
+# name = "magicpak"
+# path = "src/magicpak.rs"
+
+[dependencies]
+goblin = "0.2"
+structopt = "0.3.11"
+tempfile = "3.1.0"
