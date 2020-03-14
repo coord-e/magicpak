@@ -33,12 +33,12 @@ int main(int argc, char** argv) {
   char* name = argv[1];
   void* handle = dlopen(name, RTLD_LAZY);
   if (handle == NULL) {
-    puts(dlerror());
+    fputs(dlerror(), stderr);
     return 1;
   }
   struct link_map* link_map;
   if (dlinfo(handle, RTLD_DI_LINKMAP, &link_map) != 0) {
-    puts(dlerror());
+    fputs(dlerror(), stderr);
     return 2;
   }
   puts(link_map->l_name);
@@ -74,8 +74,8 @@ int main(int argc, char** argv) {
     pub fn lookup(&self, name: &str) -> Result<PathBuf> {
         let output = Command::new(&self.program_path).arg(name).output()?;
         if !output.status.success() {
-            let stdout = String::from_utf8_lossy(&output.stdout).to_string();
-            return Err(Error::SharedLibraryLookup(stdout));
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(Error::SharedLibraryLookup(stderr));
         }
 
         Ok(str::from_utf8(&output.stdout)?.trim().to_string().into())
