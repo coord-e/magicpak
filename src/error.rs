@@ -13,6 +13,7 @@ pub enum Error {
     ResolverCompilation(String),
     MalformedExecutable(String),
     ValueNotFoundInStrtab { tag: u64, val: u64 },
+    InterpretorNotFound,
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     IO(io::Error),
@@ -42,6 +43,9 @@ impl fmt::Display for Error {
                 "The executable is malformed: Value {} with tag {} is not found on strtab",
                 val, tag
             ),
+            Error::InterpretorNotFound => {
+                write!(f, "Could not find an interpreter for the executable")
+            }
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
             Error::PathEncoding(p) => write!(
                 f,
