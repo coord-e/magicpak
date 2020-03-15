@@ -1,5 +1,6 @@
 use std::borrow::{Borrow, Cow};
 use std::ffi::{OsStr, OsString};
+use std::fmt;
 use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
@@ -31,6 +32,10 @@ impl BundlePath {
 
     pub fn to_str_lossy(&self) -> Cow<str> {
         self.inner.to_string_lossy()
+    }
+
+    pub fn display<'a>(&'a self) -> Display<'a> {
+        Display { inner: self }
     }
 
     pub fn reify<P>(&self, dist: P) -> PathBuf
@@ -77,5 +82,15 @@ impl AsRef<BundlePath> for BundlePathBuf {
 impl Borrow<BundlePath> for BundlePathBuf {
     fn borrow(&self) -> &BundlePath {
         self.deref()
+    }
+}
+
+pub struct Display<'a> {
+    inner: &'a BundlePath,
+}
+
+impl<'a> fmt::Display for Display<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "[{}]", Path::new(&self.inner.inner).display())
     }
 }

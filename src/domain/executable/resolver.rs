@@ -6,6 +6,7 @@ use std::{env, str};
 use crate::base::command_ext::CommandExt;
 use crate::base::{Error, Result};
 
+use log::debug;
 use tempfile::{NamedTempFile, TempPath};
 
 static RESOLVER_SOURCE_CODE: &str = r"
@@ -31,6 +32,7 @@ int main(int argc, char** argv) {
   dlclose(handle);
 }";
 
+#[derive(Debug)]
 pub struct Resolver<'a> {
     program_path: TempPath,
     rpaths: &'a Vec<PathBuf>,
@@ -60,11 +62,14 @@ impl<'a> Resolver<'a> {
         }
         source_path.close()?;
 
-        Ok(Resolver {
+        let resolver = Resolver {
             program_path,
             rpaths,
             runpaths,
-        })
+        };
+
+        debug!("resolver: created resolver {:?}", resolver);
+        Ok(resolver)
     }
 
     // lookup_rpath --> lookup_env --> lookup_runpath --> lookup_rest
@@ -72,18 +77,28 @@ impl<'a> Resolver<'a> {
     // TODO: take secure-execution mode into consideration
     pub fn lookup(&self, name: &str) -> Result<PathBuf> {
         if let Some(path) = self.lookup_rpath(name) {
+            debug!("resolver: {} => {} (by Rpath)", name, path.display());
             return Ok(path);
         }
 
         if let Some(path) = self.lookup_env(name)? {
+            debug!(
+                "resolver: {} => {} (by LD_LIBRARY_PATH)",
+                name,
+                path.display()
+            );
             return Ok(path);
         }
 
         if let Some(path) = self.lookup_runpath(name) {
+            debug!("resolver: {} => {} (by RunPath)", name, path.display());
             return Ok(path);
         }
 
-        self.lookup_rest(name)
+        let path = self.lookup_rest(name)?;
+        debug!("resolver: {} => {} (by ld.so)", name, path.display());
+
+        Ok(path)
     }
 
     fn lookup_rpath(&self, name: &str) -> Option<PathBuf> {
@@ -98,6 +113,8 @@ impl<'a> Resolver<'a> {
         if let Some(paths_os_str) = env::var_os("LD_LIBRARY_PATH") {
             // TODO: it would be better to process within OsString
             let paths_str = paths_os_str.into_string().map_err(Error::PathEncoding)?;
+            debug!("resolver: LD_LIBRARY_PATH={}", paths_str);
+
             let result = paths_str
                 .split(|c| c == ':' || c == ';')
                 .find_map(|x| try_joined(x, name));

@@ -8,9 +8,11 @@ use crate::base::{Error, Result};
 use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};
 use goblin::elf::Elf;
 use goblin::strtab::Strtab;
+use log::{debug, info};
 
 mod resolver;
 
+#[derive(Debug)]
 pub struct Executable {
     path: PathBuf,
     interpreter: PathBuf,
@@ -24,23 +26,30 @@ impl Executable {
     where
         P: AsRef<Path>,
     {
+        info!("exe: loading {}", exe_path.as_ref().display());
         let buffer = fs::read(exe_path.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
         let path = exe_path.as_ref().to_owned();
         let interpreter = if let Some(interp) = elf.interpreter {
             interp.into()
         } else {
-            default_interpreter(exe_path)?
+            let interp = default_interpreter(exe_path)?;
+            info!("exe: using default interpreter {}", interp.display());
+            interp
         };
         let (rpaths, runpaths) = collect_paths(&elf)?;
         let libraries = elf.libraries.into_iter().map(ToOwned::to_owned).collect();
-        Ok(Executable {
+
+        let exe = Executable {
             path,
             interpreter,
             libraries,
             rpaths,
             runpaths,
-        })
+        };
+
+        debug!("exe: loaded {:?}", exe);
+        Ok(exe)
     }
 
     pub fn path(&self) -> &PathBuf {
@@ -57,6 +66,8 @@ impl Executable {
         let mut paths = Vec::new();
         for lib in &self.libraries {
             let path = resolver.lookup(&lib)?;
+            debug!("exe: found shared object {} => {}", lib, path.display());
+
             // TODO: cache once traversed
             // TODO: deal with semantic inconsistency (Executable on shared object)
             // TODO: propatage rpaths into children (see ld.so(8))

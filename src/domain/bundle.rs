@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 use crate::base::Result;
 use crate::domain::{BundlePath, BundlePathBuf};
 
+use log::{debug, info};
+
 enum Source {
     NewDirectory,
     NewFile(Vec<u8>),
@@ -27,6 +29,7 @@ impl Bundle {
     where
         P: AsRef<BundlePath>,
     {
+        debug!("bundle: mkdir {}", path.as_ref().display());
         self.entries
             .insert(path.as_ref().to_owned(), Source::NewDirectory);
     }
@@ -35,6 +38,10 @@ impl Bundle {
     where
         P: AsRef<BundlePath>,
     {
+        debug!(
+            "bundle: add_file {} (content omitted)",
+            path.as_ref().display()
+        );
         self.entries
             .insert(path.as_ref().to_owned(), Source::NewFile(content));
     }
@@ -45,6 +52,11 @@ impl Bundle {
         Q: AsRef<Path>,
     {
         debug_assert!(from.as_ref().is_absolute());
+        debug!(
+            "bundle: copy from: {} to: {}",
+            from.as_ref().display(),
+            path.as_ref().display()
+        );
 
         self.entries.insert(
             path.as_ref().to_owned(),
@@ -75,8 +87,16 @@ impl Bundle {
     {
         for (bpath, source) in self.entries.iter() {
             match source {
-                Source::NewDirectory => fs::create_dir_all(bpath.reify(&dest))?,
-                Source::NewFile(blob) => fs::write(bpath.reify(&dest), blob)?,
+                Source::NewDirectory => {
+                    let path = bpath.reify(&dest);
+                    info!("emit: mkdir {}", path.display());
+                    fs::create_dir_all(path)?
+                }
+                Source::NewFile(blob) => {
+                    let path = bpath.reify(&dest);
+                    info!("emit: write {} (content omitted)", path.display());
+                    fs::write(path, blob)?
+                }
                 Source::CopyFrom(src_path) => {
                     sync_copy(src_path, bpath, dest.as_ref())?;
                 }
@@ -109,6 +129,11 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
         } else {
             link_dest
         };
+        info!(
+            "emit: link {} => {}",
+            link_dest_absolute.display(),
+            target.display()
+        );
         unix::fs::symlink(&link_dest_absolute, target)?;
         sync_copy(
             &link_dest_absolute,
@@ -116,6 +141,7 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
             dest,
         )
     } else {
+        info!("emit: copy {} => {}", from.display(), target.display());
         fs::copy(from, target)?;
         Ok(())
     }
