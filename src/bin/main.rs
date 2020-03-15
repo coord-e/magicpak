@@ -31,10 +31,30 @@ struct Opt {
     #[structopt(short = "r", long)]
     /// specify installation path of the executable in the bundle
     install_to: Option<String>,
+
+    #[structopt(long, default_value = "Warn")]
+    /// specify log output level
+    log_level: log::LevelFilter,
+
+    #[structopt(short, long)]
+    /// verbose mode. same as --log-level Info
+    verbose: bool,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opt = Opt::from_args();
+
+    let log_level = if opt.verbose {
+        log::LevelFilter::Info
+    } else {
+        opt.log_level
+    };
+
+    fern::Dispatch::new()
+        .level(log_level)
+        .chain(std::io::stderr())
+        .apply()
+        .unwrap();
 
     let mut bundle = Bundle::new();
     let exe = Executable::load(opt.input)?;
