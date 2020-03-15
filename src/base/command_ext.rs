@@ -1,7 +1,7 @@
 use std::io::Result;
 use std::process::{Command, ExitStatus, Output};
 
-use log::{info, log_enabled};
+use log::debug;
 
 pub trait CommandExt {
     fn output_with_log(&mut self) -> Result<Output>;
@@ -18,21 +18,18 @@ impl CommandExt for Command {
 
         let mut message = format!("command: {}\n  => {}", command_line, output.status);
 
-        use log::Level;
-        if log_enabled!(Level::Debug) {
-            if !output.stdout.is_empty() {
-                let stdout = format_lines(String::from_utf8_lossy(&output.stdout));
-                message.push_str("\n  => stdout: ");
-                message.push_str(&stdout);
-            }
-            if !output.stderr.is_empty() {
-                let stderr = format_lines(String::from_utf8_lossy(&output.stderr));
-                message.push_str("\n  => stderr: ");
-                message.push_str(&stderr);
-            }
+        if !output.stdout.is_empty() {
+            let stdout = format_lines(String::from_utf8_lossy(&output.stdout));
+            message.push_str("\n  => stdout: ");
+            message.push_str(&stdout);
+        }
+        if !output.stderr.is_empty() {
+            let stderr = format_lines(String::from_utf8_lossy(&output.stderr));
+            message.push_str("\n  => stderr: ");
+            message.push_str(&stderr);
         }
 
-        info!("{}", message);
+        debug!("{}", message);
 
         Ok(output)
     }
