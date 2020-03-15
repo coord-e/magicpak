@@ -4,8 +4,9 @@ use std::process::Command;
 
 use crate::error::{Error, Result};
 
-use goblin::elf::dynamic::{DT_RPATH, DT_RUNPATH};
+use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};
 use goblin::elf::Elf;
+use goblin::strtab::Strtab;
 
 mod resolver;
 
@@ -14,6 +15,7 @@ pub struct Executable {
     interpreter: PathBuf,
     libraries: Vec<String>,
     rpaths: Vec<PathBuf>,
+    runpaths: Vec<PathBuf>,
 }
 
 impl Executable {
@@ -29,13 +31,14 @@ impl Executable {
         } else {
             default_interpreter(exe_path)?
         };
-        let rpaths = rpaths(&elf)?;
+        let (rpaths, runpaths) = collect_paths(&elf)?;
         let libraries = elf.libraries.into_iter().map(ToOwned::to_owned).collect();
         Ok(Executable {
             path,
             interpreter,
             libraries,
             rpaths,
+            runpaths,
         })
     }
 
@@ -48,13 +51,14 @@ impl Executable {
     }
 
     pub fn dynamic_libraries(&self) -> Result<Vec<PathBuf>> {
-        let resolver = resolver::Resolver::new(&self.interpreter, &self.rpaths)?;
+        let resolver = resolver::Resolver::new(&self.interpreter, &self.rpaths, &self.runpaths)?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
             let path = resolver.lookup(&lib)?;
             // TODO: cache once traversed
             // TODO: deal with semantic inconsistency (Executable on shared object)
+            // TODO: propatage rpaths into children (see ld.so(8))
             let mut children = Executable::load(path.clone())?.dynamic_libraries()?;
 
             paths.push(path);
@@ -93,8 +97,9 @@ where
     Err(Error::InterpretorNotFound)
 }
 
-fn rpaths(elf: &Elf<'_>) -> Result<Vec<PathBuf>> {
+fn collect_paths(elf: &Elf<'_>) -> Result<(Vec<PathBuf>, Vec<PathBuf>)> {
     let mut rpaths = Vec::new();
+    let mut runpaths = Vec::new();
     match elf {
         Elf {
             dynamic: Some(dynamic),
@@ -102,19 +107,31 @@ fn rpaths(elf: &Elf<'_>) -> Result<Vec<PathBuf>> {
             ..
         } => {
             for d in &dynamic.dyns {
-                if d.d_tag == DT_RUNPATH || d.d_tag == DT_RPATH {
-                    if let Some(epath) = dynstrtab.get(d.d_val as usize) {
-                        rpaths.push(epath?.into());
-                    } else {
-                        return Err(Error::ValueNotFoundInStrtab {
-                            tag: d.d_tag,
-                            val: d.d_val,
-                        });
-                    }
+                if d.d_tag == DT_RUNPATH {
+                    runpaths.append(&mut get_paths_in_strtab(d, dynstrtab)?);
+                } else if d.d_tag == DT_RPATH {
+                    rpaths.append(&mut get_paths_in_strtab(d, dynstrtab)?);
                 }
             }
-            Ok(rpaths)
+            Ok((rpaths, runpaths))
         }
-        _ => Ok(Vec::new()),
+        _ => Ok((Vec::new(), Vec::new())),
+    }
+}
+
+fn get_paths_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<Vec<PathBuf>> {
+    let content = get_content_in_strtab(d, strtab)?;
+    // assuming paths in DT_RPATH and DT_RUNPATH are separated by colons.
+    Ok(content.split(':').map(Into::into).collect())
+}
+
+fn get_content_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<String> {
+    if let Some(x) = strtab.get(d.d_val as usize) {
+        Ok(x?.to_owned())
+    } else {
+        Err(Error::ValueNotFoundInStrtab {
+            tag: d.d_tag,
+            val: d.d_val,
+        })
     }
 }
