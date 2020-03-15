@@ -49,10 +49,19 @@ impl Executable {
 
     pub fn dynamic_libraries(&self) -> Result<Vec<PathBuf>> {
         let resolver = resolver::Resolver::new(&self.interpreter, &self.rpaths)?;
-        self.libraries
-            .iter()
-            .map(|lib| resolver.lookup(lib))
-            .collect()
+
+        let mut paths = Vec::new();
+        for lib in &self.libraries {
+            let path = resolver.lookup(&lib)?;
+            // TODO: cache once traversed
+            // TODO: deal with semantic inconsistency (Executable on shared object)
+            let mut children = Executable::load(path.clone())?.dynamic_libraries()?;
+
+            paths.push(path);
+            paths.append(&mut children);
+        }
+
+        Ok(paths)
     }
 }
 
