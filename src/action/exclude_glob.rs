@@ -1,5 +1,5 @@
+use crate::base::Result;
 use crate::domain::Bundle;
-use crate::error::Result;
 
 pub fn exclude_glob(bundle: &mut Bundle, pattern: &str) -> Result<()> {
     let pattern = glob::Pattern::new(pattern)?;

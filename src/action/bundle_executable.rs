@@ -1,5 +1,5 @@
+use crate::base::{Error, Result};
 use crate::domain::{Bundle, BundlePath, Executable};
-use crate::error::{Error, Result};
 
 pub fn bundle_executable(
     bundle: &mut Bundle,

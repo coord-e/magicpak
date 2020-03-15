@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use crate::base::Result;
 use crate::domain::{BundlePath, BundlePathBuf};
-use crate::error::Result;
 
 enum Source {
     NewDirectory,

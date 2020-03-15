@@ -120,6 +120,7 @@ version = "0.1.0"
 dependencies = [
  "glob",
  "goblin",
+ "log",
  "structopt",
  "tempfile",
 ]

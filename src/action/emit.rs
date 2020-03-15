@@ -1,8 +1,8 @@
 use std::fs;
 use std::path::Path;
 
+use crate::base::{Error, Result};
 use crate::domain::Bundle;
-use crate::error::{Error, Result};
 
 pub fn emit<P>(bundle: &mut Bundle, path: P) -> Result<()>
 where

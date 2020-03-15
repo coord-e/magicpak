@@ -3,7 +3,8 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, str};
 
-use crate::error::{Error, Result};
+use crate::base::command_ext::CommandExt;
+use crate::base::{Error, Result};
 
 use tempfile::{NamedTempFile, TempPath};
 
@@ -52,7 +53,7 @@ impl<'a> Resolver<'a> {
             .arg(&program_path)
             .arg("-xc")
             .arg(&source_path)
-            .output()?;
+            .output_with_log()?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
             return Err(Error::ResolverCompilation(stderr));
@@ -110,7 +111,7 @@ impl<'a> Resolver<'a> {
         let output = Command::new(&self.program_path)
             .arg(name)
             .env_clear()
-            .output()?;
+            .output_with_log()?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
             return Err(Error::SharedLibraryLookup(stderr));

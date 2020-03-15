@@ -2,7 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::error::{Error, Result};
+use crate::base::command_ext::CommandExt;
+use crate::base::{Error, Result};
 
 use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};
 use goblin::elf::Elf;
@@ -88,7 +89,7 @@ where
         let status = Command::new(rtld)
             .arg("--verify")
             .arg(exe.as_ref())
-            .status()?;
+            .status_with_log()?;
         match status.code() {
             Some(0) | Some(2) => return Ok(rtld.into()),
             _ => continue,
