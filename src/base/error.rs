@@ -14,6 +14,10 @@ pub enum Error {
     MalformedExecutable(String),
     ValueNotFoundInStrtab { tag: u64, val: u64 },
     InterpretorNotFound,
+    BusyBoxInstall(String),
+    TestFailed(String),
+    Nix(nix::Error),
+    ExecutableLocateFailed(which::Error),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     IO(io::Error),
@@ -46,7 +50,15 @@ impl fmt::Display for Error {
             Error::InterpretorNotFound => {
                 write!(f, "Could not find an interpreter for the executable")
             }
+            Error::BusyBoxInstall(e) => write!(
+                f,
+                "Unable to install busybox to the temporary directory: {}",
+                e
+            ),
+            Error::TestFailed(cmd) => write!(f, "Test failed: {} returned non-zero exit code", cmd),
+            Error::Nix(e) => write!(f, "nix error: {}", e),
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
+            Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::PathEncoding(p) => write!(
                 f,
                 "Unable to interpret the path as UTF-8: {}",
@@ -89,5 +101,17 @@ impl From<goblin::Error> for Error {
 impl From<glob::PatternError> for Error {
     fn from(err: glob::PatternError) -> Self {
         Error::InvalidGlobPattern(err.msg.to_string())
+    }
+}
+
+impl From<nix::Error> for Error {
+    fn from(err: nix::Error) -> Self {
+        Error::Nix(err)
+    }
+}
+
+impl From<which::Error> for Error {
+    fn from(err: which::Error) -> Self {
+        Error::ExecutableLocateFailed(err)
     }
 }

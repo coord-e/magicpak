@@ -39,6 +39,10 @@ struct Opt {
     #[structopt(short, long)]
     /// verbose mode. same as --log-level Info
     verbose: bool,
+
+    #[structopt(short, long)]
+    /// enable testing
+    test: Option<String>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -72,6 +76,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     for glob in opt.exclude {
         action::exclude_glob(&mut bundle, &glob)?;
+    }
+
+    if let Some(command) = opt.test {
+        action::test(&bundle, &command)?;
     }
 
     action::emit(&mut bundle, opt.output)?;

@@ -81,7 +81,7 @@ impl Bundle {
         std::mem::replace(&mut self.entries, updated);
     }
 
-    pub fn emit<P>(&mut self, dest: P) -> Result<()>
+    pub fn emit<P>(&self, dest: P) -> Result<()>
     where
         P: AsRef<Path>,
     {
