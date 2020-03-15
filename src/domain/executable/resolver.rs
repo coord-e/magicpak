@@ -69,6 +69,7 @@ impl Resolver {
     }
 
     pub fn lookup(&self, name: &str) -> Result<PathBuf> {
+        // TODO: we may not need a new process here
         let output = Command::new(&self.program_path).arg(name).output()?;
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr).to_string();
