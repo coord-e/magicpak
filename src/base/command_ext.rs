@@ -41,11 +41,9 @@ where
 {
     let string = s.as_ref().trim();
     if string.lines().nth(1).is_some() {
-        let mut indented = string
+        string
             .lines()
-            .fold(String::new(), |acc, line| format!("{}  |  {}\n", acc, line));
-        indented.pop(); // trailing newline is removed
-        indented
+            .fold(String::new(), |acc, line| format!("{}\n  |  {}", acc, line))
     } else {
         string.to_owned()
     }
