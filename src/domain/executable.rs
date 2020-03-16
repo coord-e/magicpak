@@ -31,6 +31,7 @@ impl AsRef<Path> for ExecutableLocation {
 #[derive(Debug)]
 pub struct Executable {
     location: ExecutableLocation,
+    name: String,
     interpreter: Option<PathBuf>,
     libraries: Vec<String>,
     rpaths: Vec<PathBuf>,
@@ -38,7 +39,7 @@ pub struct Executable {
 }
 
 impl Executable {
-    fn load_impl(location: ExecutableLocation) -> Result<Self> {
+    fn load_impl(location: ExecutableLocation, name: String) -> Result<Self> {
         info!("exe: loading {}", location.as_ref().display());
         let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
@@ -58,6 +59,7 @@ impl Executable {
 
         let exe = Executable {
             location,
+            name,
             interpreter,
             libraries,
             rpaths,
@@ -72,11 +74,23 @@ impl Executable {
     where
         P: AsRef<Path>,
     {
-        Executable::load_impl(ExecutableLocation::Fixed(exe_path.as_ref().to_owned()))
+        let path = exe_path.as_ref().canonicalize()?;
+        let location = ExecutableLocation::Fixed(path.to_owned());
+        // unwrap is ok because `path` here is canonicalized
+        let file_name = path.file_name().unwrap();
+        let file_name_str = file_name
+            .to_str()
+            .ok_or_else(|| Error::PathEncoding(file_name.to_os_string()))?
+            .to_string();
+        Executable::load_impl(location, file_name_str)
     }
 
     pub fn path(&self) -> &Path {
         self.location.as_ref()
+    }
+
+    pub fn name(&self) -> &String {
+        &self.name
     }
 
     pub fn interpreter(&self) -> Option<&PathBuf> {
@@ -137,7 +151,10 @@ impl Executable {
             return Err(Error::Upx(stderr));
         }
 
-        Executable::load_impl(ExecutableLocation::Temporary(result_path))
+        Executable::load_impl(
+            ExecutableLocation::Temporary(result_path),
+            self.name().clone(),
+        )
     }
 }
 
