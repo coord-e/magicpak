@@ -48,7 +48,15 @@ struct Opt {
 
     #[structopt(short, long)]
     /// enable dynamic analysis
-    dynamic: Option<String>,
+    dynamic: bool,
+
+    #[structopt(long, allow_hyphen_values = true, number_of_values = 1)]
+    /// arguments passed to the executable in dynamic analysis
+    dynamic_arg: Vec<String>,
+
+    #[structopt(long)]
+    /// arguments passed to the executable in dynamic analysis
+    dynamic_input: Option<String>,
 
     #[structopt(short, long)]
     /// enable compression
@@ -72,6 +80,15 @@ fn run(opt: &Opt) -> Result<()> {
     let mut exe = Executable::load(&opt.input)?;
 
     action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
+
+    if opt.dynamic {
+        action::bundle_dynamic_dependencies(
+            &mut bundle,
+            &exe,
+            &opt.dynamic_arg,
+            opt.dynamic_input.as_ref(),
+        )?;
+    }
 
     if opt.compress {
         action::compress_exexcutable(&mut exe, &opt.upx, &opt.upx_option)?;

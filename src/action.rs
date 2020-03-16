@@ -1,3 +1,4 @@
+pub mod bundle_dynamic_dependencies;
 pub mod bundle_executable;
 pub mod bundle_shared_object_dependencies;
 pub mod compress_executable;
@@ -7,6 +8,7 @@ pub mod include_glob;
 pub mod make_directory;
 pub mod test;
 
+pub use bundle_dynamic_dependencies::*;
 pub use bundle_executable::*;
 pub use bundle_shared_object_dependencies::*;
 pub use compress_executable::*;

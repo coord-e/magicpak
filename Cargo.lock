@@ -167,6 +167,7 @@ dependencies = [
  "fern",
  "glob",
  "goblin",
+ "libc",
  "log",
  "nix",
  "shell-words",
