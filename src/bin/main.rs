@@ -32,7 +32,7 @@ struct Opt {
     /// specify installation path of the executable in the bundle
     install_to: Option<String>,
 
-    #[structopt(long, default_value = "Warn")]
+    #[structopt(long, default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
     /// specify log output level
     log_level: log::LevelFilter,
 
