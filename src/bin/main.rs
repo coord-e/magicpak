@@ -110,6 +110,7 @@ fn main() {
     };
 
     fern::Dispatch::new()
+        .format(|out, message, _| out.finish(format_args!("[magicpak] {}", message)))
         .level(log_level)
         .chain(std::io::stderr())
         .apply()
