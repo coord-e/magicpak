@@ -79,7 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(command) = opt.test {
-        action::test(&bundle, &command)?;
+        action::test(&bundle, &command, &opt.busybox)?;
     }
 
     action::emit(&mut bundle, opt.output)?;

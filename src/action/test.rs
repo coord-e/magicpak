@@ -8,13 +8,13 @@ use crate::domain::Bundle;
 use log::{debug, info};
 use tempfile::TempDir;
 
-pub fn test(bundle: &Bundle, command: &str) -> Result<()> {
+pub fn test(bundle: &Bundle, command: &str, busybox_path: &str) -> Result<()> {
     info!("action: test the bundle with command '{}'", command);
 
     let tmp = TempDir::new()?;
     bundle.emit(tmp.path())?;
 
-    let busybox_path_host = which::which("busybox")?;
+    let busybox_path_host = which::which(busybox_path)?;
 
     let bindir = tmp.path().join("bin/");
     let busybox_path = bindir.join("busybox");
