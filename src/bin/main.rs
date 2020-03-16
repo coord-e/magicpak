@@ -77,7 +77,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     let mut bundle = Bundle::new();
-    let mut exe = Executable::load(opt.input)?;
+    let mut exe = Executable::load(&opt.input)?;
 
     action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
 
@@ -85,7 +85,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         action::compress_exexcutable(&mut exe, &opt.upx, &opt.upx_option)?;
     }
 
-    action::bundle_executable(&mut bundle, &exe, opt.install_to)?;
+    action::bundle_executable(&mut bundle, &exe, &opt.input, opt.install_to)?;
 
     for dir in opt.mkdir {
         action::make_directory(&mut bundle, &dir);
