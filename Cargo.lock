@@ -169,6 +169,7 @@ dependencies = [
  "goblin",
  "log",
  "nix",
+ "shell-words",
  "structopt",
  "tempfile",
  "which",
@@ -324,6 +325,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "shell-words"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "39acde55a154c4cd3ae048ac78cc21c25f3a0145e44111b523279113dce0d94a"
 
 [[package]]
 name = "strsim"

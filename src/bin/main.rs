@@ -43,6 +43,22 @@ struct Opt {
     #[structopt(short, long)]
     /// enable testing
     test: Option<String>,
+
+    #[structopt(short, long)]
+    /// enable compression
+    compress: bool,
+
+    #[structopt(long, allow_hyphen_values = true, number_of_values = 1)]
+    /// options passed to upx in --compress
+    upx_option: Vec<String>,
+
+    #[structopt(long, default_value = "busybox")]
+    /// specify the path to busybox that would be used in testing.
+    busybox: String,
+
+    #[structopt(long, default_value = "upx")]
+    /// specify the path to upx that would be used in compression.
+    upx: String,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -61,9 +77,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     let mut bundle = Bundle::new();
-    let exe = Executable::load(opt.input)?;
+    let mut exe = Executable::load(opt.input)?;
 
     action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
+
+    if opt.compress {
+        action::compress_exexcutable(&mut exe, &opt.upx, &opt.upx_option)?;
+    }
+
     action::bundle_executable(&mut bundle, &exe, opt.install_to)?;
 
     for dir in opt.mkdir {

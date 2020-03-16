@@ -8,40 +8,56 @@ use crate::base::{Error, Result};
 use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};
 use goblin::elf::Elf;
 use goblin::strtab::Strtab;
-use log::{debug, info};
+use log::{debug, info, warn};
+use tempfile::{NamedTempFile, TempPath};
 
 mod resolver;
 
 #[derive(Debug)]
+enum ExecutableLocation {
+    Fixed(PathBuf),
+    Temporary(TempPath),
+}
+
+impl AsRef<Path> for ExecutableLocation {
+    fn as_ref(&self) -> &Path {
+        match self {
+            ExecutableLocation::Fixed(path) => path.as_ref(),
+            ExecutableLocation::Temporary(temp_path) => temp_path.as_ref(),
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct Executable {
-    path: PathBuf,
-    interpreter: PathBuf,
+    location: ExecutableLocation,
+    interpreter: Option<PathBuf>,
     libraries: Vec<String>,
     rpaths: Vec<PathBuf>,
     runpaths: Vec<PathBuf>,
 }
 
 impl Executable {
-    pub fn load<P>(exe_path: P) -> Result<Self>
-    where
-        P: AsRef<Path>,
-    {
-        info!("exe: loading {}", exe_path.as_ref().display());
-        let buffer = fs::read(exe_path.as_ref())?;
+    fn load_impl(location: ExecutableLocation) -> Result<Self> {
+        info!("exe: loading {}", location.as_ref().display());
+        let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
-        let path = exe_path.as_ref().to_owned();
         let interpreter = if let Some(interp) = elf.interpreter {
-            interp.into()
+            Some(interp.into())
         } else {
-            let interp = default_interpreter(exe_path)?;
-            info!("exe: using default interpreter {}", interp.display());
+            let interp = default_interpreter(&location)?;
+            if let Some(interp) = &interp {
+                info!("exe: using default interpreter {}", interp.display());
+            } else {
+                warn!("exe: interpreter could not be found. static or compressed executable?");
+            }
             interp
         };
         let (rpaths, runpaths) = collect_paths(&elf)?;
         let libraries = elf.libraries.into_iter().map(ToOwned::to_owned).collect();
 
         let exe = Executable {
-            path,
+            location,
             interpreter,
             libraries,
             rpaths,
@@ -52,16 +68,30 @@ impl Executable {
         Ok(exe)
     }
 
-    pub fn path(&self) -> &PathBuf {
-        &self.path
+    pub fn load<P>(exe_path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        Executable::load_impl(ExecutableLocation::Fixed(exe_path.as_ref().to_owned()))
     }
 
-    pub fn interpreter(&self) -> &PathBuf {
-        &self.interpreter
+    pub fn path(&self) -> &Path {
+        self.location.as_ref()
+    }
+
+    pub fn interpreter(&self) -> Option<&PathBuf> {
+        self.interpreter.as_ref()
     }
 
     pub fn dynamic_libraries(&self) -> Result<Vec<PathBuf>> {
-        let resolver = resolver::Resolver::new(&self.interpreter, &self.rpaths, &self.runpaths)?;
+        let interpreter = if let Some(interp) = &self.interpreter {
+            interp
+        } else {
+            warn!("exe: requesting dynamic libraries of the executable without the interpreter");
+            return Ok(Vec::new());
+        };
+
+        let resolver = resolver::Resolver::new(&interpreter, &self.rpaths, &self.runpaths)?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
@@ -79,9 +109,39 @@ impl Executable {
 
         Ok(paths)
     }
+
+    pub fn compressed<S, T, I>(&self, upx_path: S, upx_opts: I) -> Result<Executable>
+    where
+        S: AsRef<str>,
+        I: IntoIterator<Item = T>,
+        T: AsRef<str>,
+    {
+        let upx = which::which(upx_path.as_ref())?;
+        let result_path = NamedTempFile::new()?.into_temp_path();
+
+        // NOTE: We use `TempPath` to delete it in `Drop::drop`, and TempPath can be obtained from `NamedTempFile`.
+        // However, upx requires nonexistent output path. So we delete it once here.
+        // TODO: We expect `fs::remove_file` to remove the file immediately, though the
+        // documentation says 'there is no guarantee that the file is immediately deleted'.
+        fs::remove_file(&result_path)?;
+        let output = Command::new(upx)
+            .args(upx_opts.into_iter().map(|x| x.as_ref().to_owned())) // TODO: do we really need to own x here?
+            .arg("--no-progress")
+            .arg(self.path())
+            .arg("-o")
+            .arg(&result_path)
+            .output_with_log()?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+            return Err(Error::Upx(stderr));
+        }
+
+        Executable::load_impl(ExecutableLocation::Temporary(result_path))
+    }
 }
 
-fn default_interpreter<P>(exe: P) -> Result<PathBuf>
+fn default_interpreter<P>(exe: P) -> Result<Option<PathBuf>>
 where
     P: AsRef<Path>,
 {
@@ -102,11 +162,12 @@ where
             .arg(exe.as_ref())
             .status_with_log()?;
         match status.code() {
-            Some(0) | Some(2) => return Ok(rtld.into()),
+            Some(0) | Some(2) => return Ok(Some(rtld.into())),
             _ => continue,
         }
     }
-    Err(Error::InterpretorNotFound)
+
+    Ok(None)
 }
 
 fn collect_paths(elf: &Elf<'_>) -> Result<(Vec<PathBuf>, Vec<PathBuf>)> {
