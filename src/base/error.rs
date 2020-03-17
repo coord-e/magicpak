@@ -20,7 +20,8 @@ pub enum Error {
     ExecutableLocateFailed(which::Error),
     Upx(String),
     InvalidCommandArgument(shell_words::ParseError),
-    DynamicFailed(String),
+    DynamicFailed(i32),
+    DynamicSignaled(nix::sys::signal::Signal),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     IO(io::Error),
@@ -64,11 +65,14 @@ impl fmt::Display for Error {
             Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
             Error::InvalidCommandArgument(e) => write!(f, "Invalid command argument: {}", e),
-            Error::DynamicFailed(e) => write!(
+            Error::DynamicFailed(code) => write!(
                 f,
-                "Dynamic analysis command '{}' failed with non-zero exit code",
-                e
+                "Dynamic analysis subproecss failed with exit code {}",
+                code
             ),
+            Error::DynamicSignaled(sig) => {
+                write!(f, "Dynamic analysis subproecss killed with {}", sig)
+            }
             Error::PathEncoding(p) => write!(
                 f,
                 "Unable to interpret the path as UTF-8: {}",

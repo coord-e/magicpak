@@ -50,7 +50,11 @@ where
 
     match nix::sys::wait::waitpid(child_pid, None)? {
         WaitStatus::Stopped(_, Signal::SIGTRAP) => (),
-        s => panic!("{:?}", s),
+        WaitStatus::Signaled(_, sig, _) | WaitStatus::Stopped(_, sig) => {
+            return Err(Error::DynamicSignaled(sig))
+        }
+        WaitStatus::Exited(_, code) => return Err(Error::DynamicFailed(code)),
+        _ => unreachable!(),
     }
 
     // TODO: should we handle forks?
@@ -81,9 +85,6 @@ where
                 // TODO: is it ok to continue here?
                 nix::sys::ptrace::syscall(pid, None)?;
             }
-            WaitStatus::PtraceEvent(pid, _, ev) => {
-                nix::sys::ptrace::syscall(pid, None)?;
-            }
             WaitStatus::PtraceSyscall(pid) => {
                 // NOTE: the end of syscall also comes to this branch with its return value in
                 // `regs.rax`, but it doesn't matter because `regs.orig_rax` won't hold effective
@@ -96,8 +97,9 @@ where
                 }
                 nix::sys::ptrace::syscall(pid, None)?;
             }
-            // TODO: error message
-            s => return Err(Error::DynamicFailed(format!("? {:?}", s))),
+            WaitStatus::Exited(_, code) => return Err(Error::DynamicFailed(code)),
+            WaitStatus::Signaled(_, sig, _) => return Err(Error::DynamicSignaled(sig)),
+            _ => unreachable!(),
         }
     }
 }
