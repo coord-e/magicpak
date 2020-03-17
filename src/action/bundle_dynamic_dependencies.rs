@@ -74,29 +74,25 @@ where
                 return Ok(());
             }
             WaitStatus::Stopped(pid, sig) => {
-                debug!("stopped {}", sig);
+                debug!(
+                    "action: bundle_dynamic_dependencies: stopped with {}, we attempt to continue",
+                    sig
+                );
                 // TODO: is it ok to continue here?
                 nix::sys::ptrace::syscall(pid, None)?;
             }
             WaitStatus::PtraceEvent(pid, _, ev) => {
-                debug!("event {:?}", ev);
                 nix::sys::ptrace::syscall(pid, None)?;
             }
             WaitStatus::PtraceSyscall(pid) => {
+                // NOTE: the end of syscall also comes to this branch with its return value in
+                // `regs.rax`, but it doesn't matter because `regs.orig_rax` won't hold effective
+                // value in that situation.
                 let regs = nix::sys::ptrace::getregs(pid)?;
-                if regs.orig_rax == libc::SYS_openat as u64 {
-                    let path: PathBuf = read_string_at(pid, regs.rsi)?.into();
-                    debug!("openat {}", path.display());
-                    // TODO: restrict conditions. e.g. regular file, ...?
-                    if path.exists() {
-                        bundle.add(path);
-                    }
-                } else if regs.orig_rax == libc::SYS_open as u64 {
-                    let path: PathBuf = read_string_at(pid, regs.rdi)?.into();
-                    debug!("open {}", path.display());
-                    if path.exists() {
-                        bundle.add(path);
-                    }
+                match regs.orig_rax as i64 {
+                    libc::SYS_openat => open_handler(bundle, pid, "openat", regs.rsi)?,
+                    libc::SYS_open => open_handler(bundle, pid, "open", regs.rdi)?,
+                    _ => (),
                 }
                 nix::sys::ptrace::syscall(pid, None)?;
             }
@@ -104,6 +100,26 @@ where
             s => return Err(Error::DynamicFailed(format!("? {:?}", s))),
         }
     }
+}
+
+fn open_handler(
+    bundle: &mut Bundle,
+    pid: nix::unistd::Pid,
+    name: &str,
+    regvalue: u64,
+) -> Result<()> {
+    let path: PathBuf = read_string_at(pid, regvalue)?.into();
+    debug!(
+        "action: bundle_dynamic_dependencies: syscall '{}' opens {}",
+        name,
+        path.display()
+    );
+
+    if path.is_file() {
+        bundle.add(path);
+    }
+
+    Ok(())
 }
 
 fn nix_to_io(nix: nix::Error) -> io::Error {
