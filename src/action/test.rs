@@ -1,7 +1,8 @@
 use std::fs;
+use std::os::unix::process::CommandExt;
 use std::process::Command;
 
-use crate::base::command_ext::CommandExt;
+use crate::base::command_ext::CommandExt as OtherCommandExt;
 use crate::base::{Error, Result};
 use crate::domain::Bundle;
 
@@ -53,13 +54,7 @@ pub fn test(bundle: &Bundle, command: &str, busybox_path: &str) -> Result<()> {
             debug!("action: test: chdir to /");
             nix::unistd::chdir("/")?;
             debug!("action: test: executing '{}' with /bin/sh", command);
-
-            use std::ffi::CString;
-            // unwrap is ok here because they don't contain interior NULL byte
-            let binsh = CString::new(b"/bin/sh" as &[u8]).unwrap();
-            let c = CString::new(b"-c" as &[u8]).unwrap();
-            let cmd = CString::new(command).unwrap();
-            match nix::unistd::execv(&binsh, &[&binsh, &c, &cmd])? {}
+            Err(Command::new("/bin/sh").arg("-c").arg(command).exec().into())
         }
     }
 }
