@@ -1,5 +1,5 @@
 use std::ffi::{OsStr, OsString};
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::os::unix::ffi::OsStringExt;
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
@@ -28,7 +28,6 @@ where
     );
 
     // TODO: this binary's rpath and runpath may affect the library resolution...
-    // TODO: it's good to see stdout/stderr here in debug logs
     // TODO: ad-hoc handling of nix errors
     let child = unsafe {
         Command::new(exe.path())
@@ -42,6 +41,7 @@ where
     let child_pid = nix::unistd::Pid::from_raw(child.id() as i32);
 
     if let Some(content) = input {
+        // unwrap is ok here because stdin is surely piped
         write!(child.stdin.unwrap(), "{}", content.as_ref())?;
     }
 
@@ -63,7 +63,16 @@ where
 
     loop {
         match nix::sys::wait::waitpid(child_pid, None)? {
-            WaitStatus::Exited(_, 0) => return Ok(()),
+            WaitStatus::Exited(_, 0) => {
+                let mut stdout = String::new();
+                let mut stderr = String::new();
+                // unwrap is ok here because they are surely piped
+                child.stdout.unwrap().read_to_string(&mut stdout)?;
+                child.stderr.unwrap().read_to_string(&mut stderr)?;
+                debug!("action: bundle_dynamic_dependencies: stdout {}", stdout);
+                debug!("action: bundle_dynamic_dependencies: stderr {}", stderr);
+                return Ok(());
+            }
             WaitStatus::Stopped(pid, sig) => {
                 debug!("stopped {}", sig);
                 // TODO: is it ok to continue here?
