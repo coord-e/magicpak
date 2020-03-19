@@ -34,7 +34,7 @@ impl BundlePath {
         self.inner.to_string_lossy()
     }
 
-    pub fn display<'a>(&'a self) -> Display<'a> {
+    pub fn display(&self) -> Display<'_> {
         Display { inner: self }
     }
 

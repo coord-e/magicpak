@@ -40,6 +40,7 @@ pub struct Resolver<'a> {
 }
 
 impl<'a> Resolver<'a> {
+    #[allow(clippy::ptr_arg)]
     pub fn new<P>(interp: P, rpaths: &'a Vec<PathBuf>, runpaths: &'a Vec<PathBuf>) -> Result<Self>
     where
         P: AsRef<Path>,

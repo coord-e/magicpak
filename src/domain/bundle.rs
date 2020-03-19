@@ -71,12 +71,11 @@ impl Bundle {
         resource.bundle_to(self);
     }
 
-    pub fn filter<P>(&mut self, predicate: P)
+    pub fn filter<P>(&mut self, mut predicate: P)
     where
         P: FnMut(&BundlePathBuf) -> bool,
     {
-        let mut predicate = predicate;
-        let entries = std::mem::replace(&mut self.entries, HashMap::default());
+        let entries = std::mem::take(&mut self.entries);
         let updated = entries.into_iter().filter(|(k, _)| predicate(k)).collect();
         std::mem::replace(&mut self.entries, updated);
     }
