@@ -91,7 +91,7 @@ where
                 // NOTE: the end of syscall also comes to this branch with its return value in
                 // `regs.rax`, but it doesn't matter because `regs.orig_rax` won't hold effective
                 // value in that situation.
-                let regs = nix::sys::ptrace::getregs(pid)?;
+                let regs = getregs(pid)?;
                 match regs.orig_rax as i64 {
                     libc::SYS_openat => open_handler(bundle, pid, "openat", regs.rsi)?,
                     libc::SYS_open => open_handler(bundle, pid, "open", regs.rdi)?,
@@ -104,6 +104,29 @@ where
             _ => unreachable!(),
         }
     }
+}
+
+#[cfg(target_env = "musl")]
+fn getregs(pid: nix::unistd::Pid) -> Result<libc::user_regs_struct> {
+    use nix::sys::ptrace::Request;
+    use std::ffi::c_void;
+    use std::{mem, ptr};
+
+    let mut data = mem::MaybeUninit::uninit();
+    unsafe {
+        nix::sys::ptrace::ptrace(
+            Request::PTRACE_GETREGS,
+            pid,
+            ptr::null_mut(),
+            data.as_mut_ptr() as *mut c_void,
+        )?;
+        Ok(data.assume_init())
+    }
+}
+
+#[cfg(not(target_env = "musl"))]
+fn getregs(pid: nix::unistd::Pid) -> Result<libc::user_regs_struct> {
+    nix::sys::ptrace::getregs(pid).map_err(Into::into)
 }
 
 fn open_handler(
