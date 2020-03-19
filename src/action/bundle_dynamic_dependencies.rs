@@ -1,4 +1,5 @@
 use std::ffi::{OsStr, OsString};
+use std::fmt::Debug;
 use std::io::{self, Read, Write};
 use std::os::unix::ffi::OsStringExt;
 use std::os::unix::process::CommandExt;
@@ -17,14 +18,15 @@ pub fn bundle_dynamic_dependencies<I, S, T>(
     input: Option<T>,
 ) -> Result<()>
 where
-    I: IntoIterator<Item = S>,
+    I: IntoIterator<Item = S> + Debug,
     S: AsRef<OsStr>,
     T: AsRef<str>,
 {
-    // TODO: log args and input
     info!(
-        "action: bundle dynamically analyzed dependencies of {}",
+        "action: bundle dynamically analyzed dependencies of {} with arguments {:?} and stdin {:?}",
         exe.path().display(),
+        args,
+        input.as_ref().map(AsRef::as_ref)
     );
 
     // TODO: this binary's rpath and runpath may affect the library resolution...
@@ -118,6 +120,11 @@ fn open_handler(
     );
 
     if path.is_file() {
+        info!(
+            "action: bundle_dynamic_dependencies: found {}",
+            path.display()
+        );
+
         bundle.add(path);
     }
 
