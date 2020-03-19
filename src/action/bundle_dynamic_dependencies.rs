@@ -15,7 +15,7 @@ pub fn bundle_dynamic_dependencies<I, S, T>(
     bundle: &mut Bundle,
     exe: &Executable,
     args: I,
-    input: Option<T>,
+    stdin: Option<T>,
 ) -> Result<()>
 where
     I: IntoIterator<Item = S> + Debug,
@@ -26,7 +26,7 @@ where
         "action: bundle dynamically analyzed dependencies of {} with arguments {:?} and stdin {:?}",
         exe.path().display(),
         args,
-        input.as_ref().map(AsRef::as_ref)
+        stdin.as_ref().map(AsRef::as_ref)
     );
 
     // TODO: this binary's rpath and runpath may affect the library resolution...
@@ -42,7 +42,7 @@ where
     .spawn()?;
     let child_pid = nix::unistd::Pid::from_raw(child.id() as i32);
 
-    if let Some(content) = input {
+    if let Some(content) = stdin {
         // unwrap is ok here because stdin is surely piped
         write!(child.stdin.unwrap(), "{}", content.as_ref())?;
     }

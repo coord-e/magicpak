@@ -56,23 +56,23 @@ struct Opt {
 
     #[structopt(long)]
     /// arguments passed to the executable in dynamic analysis
-    dynamic_input: Option<String>,
+    dynamic_stdin: Option<String>,
 
     #[structopt(short, long)]
     /// enable compression
     compress: bool,
 
     #[structopt(long, allow_hyphen_values = true, number_of_values = 1)]
-    /// options passed to upx in --compress
-    upx_option: Vec<String>,
+    /// arguments passed to upx in --compress
+    upx_arg: Vec<String>,
 
     #[structopt(long, default_value = "busybox")]
     /// specify the path to busybox that would be used in testing.
-    busybox: String,
+    busybox_path: String,
 
     #[structopt(long, default_value = "upx")]
     /// specify the path to upx that would be used in compression.
-    upx: String,
+    upx_path: String,
 }
 
 fn run(opt: &Opt) -> Result<()> {
@@ -86,12 +86,12 @@ fn run(opt: &Opt) -> Result<()> {
             &mut bundle,
             &exe,
             &opt.dynamic_arg,
-            opt.dynamic_input.as_ref(),
+            opt.dynamic_stdin.as_ref(),
         )?;
     }
 
     if opt.compress {
-        action::compress_exexcutable(&mut exe, &opt.upx, &opt.upx_option)?;
+        action::compress_exexcutable(&mut exe, &opt.upx_path, &opt.upx_arg)?;
     }
 
     action::bundle_executable(&mut bundle, &exe, &opt.input, opt.install_to.as_ref())?;
@@ -109,7 +109,7 @@ fn run(opt: &Opt) -> Result<()> {
     }
 
     if let Some(command) = &opt.test {
-        action::test(&bundle, &command, &opt.busybox)?;
+        action::test(&bundle, &command, &opt.busybox_path)?;
     }
 
     action::emit(&mut bundle, &opt.output)?;
