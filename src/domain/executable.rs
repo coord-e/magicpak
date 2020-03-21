@@ -2,7 +2,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use crate::base::command_ext::CommandExt;
+use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 
 use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};

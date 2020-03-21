@@ -1,11 +1,12 @@
 use std::ffi::{OsStr, OsString};
 use std::fmt::Debug;
-use std::io::{self, Read, Write};
+use std::io::{Read, Write};
 use std::os::unix::ffi::OsStringExt;
 use std::os::unix::process::CommandExt;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use crate::base::error;
 use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
@@ -34,7 +35,7 @@ where
     let child = unsafe {
         Command::new(exe.path())
             .args(args)
-            .pre_exec(|| nix::sys::ptrace::traceme().map_err(nix_to_io))
+            .pre_exec(|| nix::sys::ptrace::traceme().map_err(error::nix_to_io))
     }
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
@@ -152,10 +153,6 @@ fn open_handler(
     }
 
     Ok(())
-}
-
-fn nix_to_io(nix: nix::Error) -> io::Error {
-    io::Error::new(io::ErrorKind::Other, format!("Nix error: {}", nix))
 }
 
 fn read_string_at(pid: nix::unistd::Pid, mut addr: u64) -> Result<OsString> {

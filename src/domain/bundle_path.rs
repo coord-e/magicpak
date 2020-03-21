@@ -60,7 +60,7 @@ impl AsRef<BundlePath> for BundlePath {
     }
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub struct BundlePathBuf {
     inner: OsString,
 }

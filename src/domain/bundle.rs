@@ -1,19 +1,21 @@
 use std::collections::HashMap;
+use std::default::Default;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::base::Result;
-use crate::domain::{BundlePath, BundlePathBuf};
+use crate::domain::{BundlePath, BundlePathBuf, Jail};
 
 use log::{debug, info};
 
+#[derive(Clone)]
 enum Source {
     NewDirectory,
     NewFile(Vec<u8>),
     CopyFrom(PathBuf),
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Bundle {
     entries: HashMap<BundlePathBuf, Source>,
 }
@@ -102,6 +104,14 @@ impl Bundle {
             }
         }
         Ok(())
+    }
+
+    pub fn create_jail(&self) -> Result<Jail> {
+        let jail = Jail::new()?;
+        debug!("bundle: created jail {}", jail.path().display());
+
+        self.emit(&jail)?;
+        Ok(jail)
     }
 }
 

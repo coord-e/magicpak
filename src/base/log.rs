@@ -3,7 +3,7 @@ use std::process::{Command, ExitStatus, Output};
 
 use log::debug;
 
-pub trait CommandExt {
+pub trait CommandLogExt {
     fn output_with_log(&mut self) -> Result<Output>;
 
     fn status_with_log(&mut self) -> Result<ExitStatus> {
@@ -11,7 +11,7 @@ pub trait CommandExt {
     }
 }
 
-impl CommandExt for Command {
+impl CommandLogExt for Command {
     fn output_with_log(&mut self) -> Result<Output> {
         let command_line = format!("{:?}", self);
         let output = self.output()?;

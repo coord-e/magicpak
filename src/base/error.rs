@@ -16,7 +16,6 @@ pub enum Error {
     InterpretorNotFound,
     BusyBoxInstall(String),
     TestFailed(String),
-    Nix(nix::Error),
     ExecutableLocateFailed(which::Error),
     Upx(String),
     InvalidCommandArgument(shell_words::ParseError),
@@ -60,7 +59,6 @@ impl fmt::Display for Error {
                 e
             ),
             Error::TestFailed(cmd) => write!(f, "Test failed: {} returned non-zero exit code", cmd),
-            Error::Nix(e) => write!(f, "nix error: {}", e),
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
             Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
@@ -120,7 +118,7 @@ impl From<glob::PatternError> for Error {
 
 impl From<nix::Error> for Error {
     fn from(err: nix::Error) -> Self {
-        Error::Nix(err)
+        Error::IO(nix_to_io(err))
     }
 }
 
@@ -133,5 +131,15 @@ impl From<which::Error> for Error {
 impl From<shell_words::ParseError> for Error {
     fn from(err: shell_words::ParseError) -> Self {
         Error::InvalidCommandArgument(err)
+    }
+}
+
+pub fn nix_to_io(nix: nix::Error) -> io::Error {
+    match nix {
+        nix::Error::Sys(errno) => errno.into(),
+        nix::Error::InvalidPath | nix::Error::InvalidUtf8 => {
+            io::Error::new(io::ErrorKind::InvalidData, nix)
+        }
+        nix::Error::UnsupportedOperation => io::Error::new(io::ErrorKind::InvalidInput, nix),
     }
 }

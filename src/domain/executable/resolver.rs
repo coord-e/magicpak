@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, str};
 
-use crate::base::command_ext::CommandExt;
+use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 
 use log::debug;
