@@ -46,6 +46,10 @@ struct Opt {
     /// Test the resulting bundle with specified command
     test: Option<String>,
 
+    #[structopt(short, long, value_name = "CONTENT")]
+    /// Test stdout of the test command
+    test_stdout: Option<String>,
+
     #[structopt(short, long)]
     /// Enable dynamic analysis
     dynamic: bool,
@@ -124,7 +128,7 @@ fn run(opt: &Opt) -> Result<()> {
     }
 
     if let Some(command) = &opt.test {
-        action::test(&bundle, &command, &opt.busybox)?;
+        action::test(&bundle, &command, opt.test_stdout.as_ref(), &opt.busybox)?;
     }
 
     action::emit(&mut bundle, &opt.output)?;
