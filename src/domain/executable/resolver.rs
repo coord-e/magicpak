@@ -1,4 +1,6 @@
+use std::ffi::OsStr;
 use std::io::Write;
+use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::{env, str};
@@ -111,14 +113,13 @@ impl<'a> Resolver<'a> {
     }
 
     fn lookup_env(&self, name: &str) -> Result<Option<PathBuf>> {
-        if let Some(paths_os_str) = env::var_os("LD_LIBRARY_PATH") {
-            // TODO: it would be better to process within OsString
-            let paths_str = paths_os_str.into_string().map_err(Error::PathEncoding)?;
-            debug!("resolver: LD_LIBRARY_PATH={}", paths_str);
+        if let Some(paths_str) = env::var_os("LD_LIBRARY_PATH") {
+            debug!("resolver: LD_LIBRARY_PATH={}", paths_str.to_string_lossy());
 
             let result = paths_str
-                .split(|c| c == ':' || c == ';')
-                .find_map(|x| try_joined(x, name));
+                .into_vec()
+                .split(|c| char::from(*c) == ':' || char::from(*c) == ';')
+                .find_map(|x| try_joined(OsStr::from_bytes(x), name));
             Ok(result)
         } else {
             Ok(None)
