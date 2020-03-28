@@ -7,8 +7,10 @@ use crate::domain::Bundle;
 
 use log::info;
 
-pub fn test(bundle: &Bundle, command: &str, busybox_path: &str) -> Result<()> {
+pub fn test(bundle: &Bundle, command: &str, busybox: &str) -> Result<()> {
     info!("action: test the bundle with command '{}'", command);
+
+    let busybox_path = which::which(busybox)?;
 
     let jail = bundle.create_jail()?;
     jail.install_busybox(busybox_path)?;

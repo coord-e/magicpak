@@ -67,24 +67,24 @@ struct Opt {
     upx_arg: Vec<String>,
 
     #[structopt(long, default_value = "busybox")]
-    /// specify the path to busybox that would be used in testing.
-    busybox_path: String,
+    /// specify the path or name of busybox that would be used in testing.
+    busybox: String,
 
     #[structopt(long, default_value = "upx")]
-    /// specify the path to upx that would be used in compression.
-    upx_path: String,
+    /// specify the path or name of upx that would be used in compression.
+    upx: String,
 
     #[structopt(long, default_value = "cc", env = "CC")]
-    /// specify the path to c compiler that would be used in
+    /// specify the path or name of c compiler that would be used in
     /// the name resolution of shared library dependencies.
-    cc_path: String,
+    cc: String,
 }
 
 fn run(opt: &Opt) -> Result<()> {
     let mut bundle = Bundle::new();
     let mut exe = Executable::load(&opt.input)?;
 
-    action::bundle_shared_object_dependencies(&mut bundle, &exe, &opt.cc_path)?;
+    action::bundle_shared_object_dependencies(&mut bundle, &exe, &opt.cc)?;
 
     if opt.dynamic {
         action::bundle_dynamic_dependencies(
@@ -96,7 +96,7 @@ fn run(opt: &Opt) -> Result<()> {
     }
 
     if opt.compress {
-        action::compress_exexcutable(&mut exe, &opt.upx_path, &opt.upx_arg)?;
+        action::compress_exexcutable(&mut exe, &opt.upx, &opt.upx_arg)?;
     }
 
     action::bundle_executable(&mut bundle, &exe, &opt.input, opt.install_to.as_ref())?;
@@ -114,7 +114,7 @@ fn run(opt: &Opt) -> Result<()> {
     }
 
     if let Some(command) = &opt.test {
-        action::test(&bundle, &command, &opt.busybox_path)?;
+        action::test(&bundle, &command, &opt.busybox)?;
     }
 
     action::emit(&mut bundle, &opt.output)?;

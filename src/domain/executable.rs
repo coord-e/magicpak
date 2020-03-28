@@ -114,7 +114,10 @@ impl Executable {
         self.interpreter.as_ref()
     }
 
-    pub fn dynamic_libraries(&self, cc_path: &str) -> Result<Vec<PathBuf>> {
+    pub fn dynamic_libraries<P>(&self, cc_path: P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path>,
+    {
         let interpreter = if let Some(interp) = &self.interpreter {
             interp
         } else {
@@ -122,7 +125,7 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths, cc_path)?;
+        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths, cc_path.as_ref())?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
@@ -133,7 +136,7 @@ impl Executable {
             // TODO: deal with semantic inconsistency (Executable on shared object)
             let mut children =
                 Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
-                    .dynamic_libraries(cc_path)?;
+                    .dynamic_libraries(cc_path.as_ref())?;
 
             paths.push(path);
             paths.append(&mut children);
@@ -142,13 +145,12 @@ impl Executable {
         Ok(paths)
     }
 
-    pub fn compressed<S, T, I>(&self, upx_path: S, upx_opts: I) -> Result<Executable>
+    pub fn compressed<P, T, I>(&self, upx_path: P, upx_opts: I) -> Result<Executable>
     where
-        S: AsRef<OsStr>,
+        P: AsRef<Path>,
         I: IntoIterator<Item = T>,
         T: AsRef<OsStr>,
     {
-        let upx = which::which(upx_path.as_ref())?;
         let result_path = NamedTempFile::new()?.into_temp_path();
 
         // NOTE: We use `TempPath` to delete it in `Drop::drop`, and TempPath can be obtained from `NamedTempFile`.
@@ -157,7 +159,7 @@ impl Executable {
         // documentation says 'there is no guarantee that the file is immediately deleted'.
         fs::remove_file(&result_path)?;
         debug_assert!(!result_path.exists());
-        let output = Command::new(upx)
+        let output = Command::new(upx_path.as_ref())
             .args(upx_opts)
             .arg("--no-progress")
             .arg(self.path())

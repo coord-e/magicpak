@@ -1,4 +1,3 @@
-use std::ffi::OsStr;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -41,19 +40,17 @@ pub struct Resolver<'a> {
 }
 
 impl<'a> Resolver<'a> {
-    #[allow(clippy::ptr_arg)]
-    pub fn new<P, S>(interp: P, search_paths: &'a SearchPaths, cc_path: S) -> Result<Self>
+    pub fn new<P, Q>(interp: P, search_paths: &'a SearchPaths, cc_path: Q) -> Result<Self>
     where
         P: AsRef<Path>,
-        S: AsRef<OsStr>,
+        Q: AsRef<Path>,
     {
         let mut source = NamedTempFile::new()?;
         write!(source, "{}", RESOLVER_SOURCE_CODE)?;
         let source_path = source.into_temp_path();
         let program_path = NamedTempFile::new()?.into_temp_path();
 
-        let cc = which::which(cc_path.as_ref())?;
-        let output = Command::new(cc)
+        let output = Command::new(cc_path.as_ref())
             .arg(format!("-Wl,-dynamic-linker,{}", interp.as_ref().display()))
             .arg("-ldl")
             .arg("-o")
