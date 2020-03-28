@@ -39,7 +39,11 @@ pub struct Executable {
 }
 
 impl Executable {
-    fn load_impl(location: ExecutableLocation, name: String) -> Result<Self> {
+    fn load_impl(
+        location: ExecutableLocation,
+        name: String,
+        propagated_rpaths: Option<Vec<PathBuf>>,
+    ) -> Result<Self> {
         info!("exe: loading {}", location.as_ref().display());
         let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
@@ -54,8 +58,12 @@ impl Executable {
             }
             interp
         };
-        let (rpaths, runpaths) = collect_paths(&elf)?;
+        let (mut rpaths, runpaths) = collect_paths(&elf)?;
         let libraries = elf.libraries.into_iter().map(ToOwned::to_owned).collect();
+
+        if let Some(mut paths) = propagated_rpaths {
+            rpaths.append(&mut paths);
+        }
 
         let exe = Executable {
             location,
@@ -70,7 +78,7 @@ impl Executable {
         Ok(exe)
     }
 
-    pub fn load<P>(exe_path: P) -> Result<Self>
+    fn load_with_rpaths<P>(exe_path: P, propagated_rpaths: Option<Vec<PathBuf>>) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -82,7 +90,14 @@ impl Executable {
             .to_str()
             .ok_or_else(|| Error::PathEncoding(file_name.to_os_string()))?
             .to_string();
-        Executable::load_impl(location, file_name_str)
+        Executable::load_impl(location, file_name_str, propagated_rpaths)
+    }
+
+    pub fn load<P>(exe_path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        Executable::load_with_rpaths(exe_path, None)
     }
 
     pub fn path(&self) -> &Path {
@@ -114,8 +129,9 @@ impl Executable {
 
             // TODO: cache once traversed
             // TODO: deal with semantic inconsistency (Executable on shared object)
-            // TODO: propatage rpaths into children (see ld.so(8))
-            let mut children = Executable::load(path.clone())?.dynamic_libraries()?;
+            let mut children =
+                Executable::load_with_rpaths(path.clone(), Some(self.rpaths.clone()))?
+                    .dynamic_libraries()?;
 
             paths.push(path);
             paths.append(&mut children);
@@ -154,6 +170,7 @@ impl Executable {
         Executable::load_impl(
             ExecutableLocation::Temporary(result_path),
             self.name().clone(),
+            None,
         )
     }
 }
