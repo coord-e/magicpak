@@ -18,7 +18,6 @@ pub enum Error {
     TestFailed(String),
     ExecutableLocateFailed(which::Error),
     Upx(String),
-    InvalidCommandArgument(shell_words::ParseError),
     DynamicFailed(i32),
     DynamicSignaled(nix::sys::signal::Signal),
     Encoding(str::Utf8Error),
@@ -62,7 +61,6 @@ impl fmt::Display for Error {
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
             Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
-            Error::InvalidCommandArgument(e) => write!(f, "Invalid command argument: {}", e),
             Error::DynamicFailed(code) => write!(
                 f,
                 "Dynamic analysis subproecss failed with exit code {}",
@@ -125,12 +123,6 @@ impl From<nix::Error> for Error {
 impl From<which::Error> for Error {
     fn from(err: which::Error) -> Self {
         Error::ExecutableLocateFailed(err)
-    }
-}
-
-impl From<shell_words::ParseError> for Error {
-    fn from(err: shell_words::ParseError) -> Self {
-        Error::InvalidCommandArgument(err)
     }
 }
 
