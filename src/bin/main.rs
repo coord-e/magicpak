@@ -46,7 +46,7 @@ struct Opt {
     /// Test the resulting bundle with specified command
     test: Option<String>,
 
-    #[structopt(short, long, value_name = "CONTENT")]
+    #[structopt(long, value_name = "CONTENT")]
     /// Test stdout of the test command
     test_stdout: Option<String>,
 
