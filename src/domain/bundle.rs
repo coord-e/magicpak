@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use crate::base::Result;
 use crate::domain::{BundlePath, BundlePathBuf, Jail, Resource};
 
-use log::{debug, info};
+use log::{debug, info, warn};
 
 #[derive(Clone)]
 enum Source {
@@ -128,6 +128,14 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
     match target.parent() {
         Some(parent) if !parent.exists() => fs::create_dir_all(parent)?,
         _ => (),
+    }
+
+    if !from.exists() {
+        warn!(
+            "emit: copy source {} does not exist. skipping.",
+            from.display()
+        );
+        return Ok(());
     }
 
     if fs::symlink_metadata(from)?.file_type().is_symlink() {
