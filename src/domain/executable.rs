@@ -1,3 +1,4 @@
+use std::ffi::OsStr;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -142,9 +143,9 @@ impl Executable {
 
     pub fn compressed<S, T, I>(&self, upx_path: S, upx_opts: I) -> Result<Executable>
     where
-        S: AsRef<str>,
+        S: AsRef<OsStr>,
         I: IntoIterator<Item = T>,
-        T: AsRef<str>,
+        T: AsRef<OsStr>,
     {
         let upx = which::which(upx_path.as_ref())?;
         let result_path = NamedTempFile::new()?.into_temp_path();
@@ -155,7 +156,7 @@ impl Executable {
         // documentation says 'there is no guarantee that the file is immediately deleted'.
         fs::remove_file(&result_path)?;
         let output = Command::new(upx)
-            .args(upx_opts.into_iter().map(|x| x.as_ref().to_owned())) // TODO: do we really need to own x here?
+            .args(upx_opts)
             .arg("--no-progress")
             .arg(self.path())
             .arg("-o")
