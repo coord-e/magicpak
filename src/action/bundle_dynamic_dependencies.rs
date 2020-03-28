@@ -10,7 +10,7 @@ use crate::base::error;
 use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
-use log::{debug, info};
+use log::{debug, info, warn};
 
 pub fn bundle_dynamic_dependencies<I, S, T>(
     bundle: &mut Bundle,
@@ -30,8 +30,6 @@ where
         stdin.as_ref().map(AsRef::as_ref)
     );
 
-    // TODO: this binary's rpath and runpath may affect the library resolution...
-    // TODO: ad-hoc handling of nix errors
     let child = unsafe {
         Command::new(exe.path())
             .args(args)
@@ -81,11 +79,10 @@ where
                 return Ok(());
             }
             WaitStatus::Stopped(pid, sig) => {
-                debug!(
+                warn!(
                     "action: bundle_dynamic_dependencies: stopped with {}, we attempt to continue",
                     sig
                 );
-                // TODO: is it ok to continue here?
                 nix::sys::ptrace::syscall(pid, None)?;
             }
             WaitStatus::PtraceSyscall(pid) => {
