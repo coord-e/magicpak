@@ -152,9 +152,10 @@ impl Executable {
 
         // NOTE: We use `TempPath` to delete it in `Drop::drop`, and TempPath can be obtained from `NamedTempFile`.
         // However, upx requires nonexistent output path. So we delete it once here.
-        // TODO: We expect `fs::remove_file` to remove the file immediately, though the
+        // NOTE: We expect `fs::remove_file` to remove the file immediately, though the
         // documentation says 'there is no guarantee that the file is immediately deleted'.
         fs::remove_file(&result_path)?;
+        debug_assert!(!result_path.exists());
         let output = Command::new(upx)
             .args(upx_opts)
             .arg("--no-progress")
