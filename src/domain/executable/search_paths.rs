@@ -1,8 +1,9 @@
 use std::ffi::{CStr, OsStr, OsString};
+use std::io;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 
-use crate::base::Result;
+use crate::base::{Error, Result};
 
 use log::{debug, info, warn};
 
@@ -216,7 +217,7 @@ where
 {
     match platform.as_ref().to_string_lossy().as_ref() {
         "x86_64" | "amd64" | "aarch64" => Some(true),
-        "x86" | "arm" => Some(false),
+        "i386" | "i686" | "x86" | "arm" => Some(false),
         _ => None,
     }
 }
@@ -228,8 +229,15 @@ const AT_PLATFORM: libc::c_ulong = 15;
 
 fn auxv_platform() -> Result<OsString> {
     let cstr = unsafe {
-        use auxv::getauxval::{Getauxval, NativeGetauxval};
-        let val = NativeGetauxval {}.getauxval(AT_PLATFORM)?;
+        let val = auxv::stack::iterate_stack_auxv()
+            .find(|p| p.key == AT_PLATFORM)
+            .ok_or_else(|| {
+                Error::IO(io::Error::new(
+                    io::ErrorKind::NotFound,
+                    "could not find AT_PLATFORM auxval",
+                ))
+            })?
+            .value;
         CStr::from_ptr(val as *const libc::c_char)
     };
     let platform = OsString::from_vec(cstr.to_bytes().to_vec());
