@@ -20,6 +20,7 @@ pub fn test(bundle: &Bundle, command: &str, busybox_path: &str) -> Result<()> {
         .output_with_log()?;
 
     if output.status.success() {
+        info!("action: test succeeded with {}", output.status);
         Ok(())
     } else {
         Err(Error::TestFailed(command.to_owned()))
