@@ -114,7 +114,7 @@ impl Executable {
         self.interpreter.as_ref()
     }
 
-    pub fn dynamic_libraries(&self) -> Result<Vec<PathBuf>> {
+    pub fn dynamic_libraries(&self, cc_path: &str) -> Result<Vec<PathBuf>> {
         let interpreter = if let Some(interp) = &self.interpreter {
             interp
         } else {
@@ -122,7 +122,7 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths)?;
+        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths, cc_path)?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
@@ -133,7 +133,7 @@ impl Executable {
             // TODO: deal with semantic inconsistency (Executable on shared object)
             let mut children =
                 Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
-                    .dynamic_libraries()?;
+                    .dynamic_libraries(cc_path)?;
 
             paths.push(path);
             paths.append(&mut children);

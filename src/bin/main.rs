@@ -73,13 +73,18 @@ struct Opt {
     #[structopt(long, default_value = "upx")]
     /// specify the path to upx that would be used in compression.
     upx_path: String,
+
+    #[structopt(long, default_value = "cc", env = "CC")]
+    /// specify the path to c compiler that would be used in
+    /// the name resolution of shared library dependencies.
+    cc_path: String,
 }
 
 fn run(opt: &Opt) -> Result<()> {
     let mut bundle = Bundle::new();
     let mut exe = Executable::load(&opt.input)?;
 
-    action::bundle_shared_object_dependencies(&mut bundle, &exe)?;
+    action::bundle_shared_object_dependencies(&mut bundle, &exe, &opt.cc_path)?;
 
     if opt.dynamic {
         action::bundle_dynamic_dependencies(
