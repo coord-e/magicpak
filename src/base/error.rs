@@ -126,6 +126,22 @@ impl From<which::Error> for Error {
     }
 }
 
+impl From<auxv::getauxval::GetauxvalError> for Error {
+    fn from(err: auxv::getauxval::GetauxvalError) -> Self {
+        use auxv::getauxval::GetauxvalError;
+        Error::IO(match err {
+            GetauxvalError::FunctionNotAvailable | GetauxvalError::NotFound => io::Error::new(
+                io::ErrorKind::NotFound,
+                "getauxval() could not find the requested resource. maybe an unsupported platform?",
+            ),
+            GetauxvalError::UnknownError => io::Error::new(
+                io::ErrorKind::Other,
+                "getauxval() returned an unknown error",
+            ),
+        })
+    }
+}
+
 pub fn nix_to_io(nix: nix::Error) -> io::Error {
     match nix {
         nix::Error::Sys(errno) => errno.into(),

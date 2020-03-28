@@ -216,7 +216,7 @@ fn collect_paths(elf: &Elf<'_>, executable_path: &Path) -> Result<SearchPaths> {
     debug_assert!(executable_path.is_absolute());
     // unwrap is ok here because the path points to file and is absolute
     let origin = executable_path.parent().unwrap();
-    let mut paths = SearchPaths::new(origin.into());
+    let mut paths = SearchPaths::new(origin.into())?;
 
     if let Elf {
         dynamic: Some(dynamic),
