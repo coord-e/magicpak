@@ -10,73 +10,83 @@ use structopt::StructOpt;
 #[derive(StructOpt)]
 #[structopt(name = "magicpak")]
 struct Opt {
-    #[structopt(parse(from_os_str))]
+    #[structopt(value_name = "INPUT", parse(from_os_str))]
     /// Input executable
     input: PathBuf,
 
-    #[structopt(parse(from_os_str))]
+    #[structopt(value_name = "OUTPUT", parse(from_os_str))]
     /// Output destination
     output: PathBuf,
 
-    #[structopt(short, long)]
-    /// additionally include file/directory with glob patterns.
+    #[structopt(short, long, value_name = "GLOB")]
+    /// Additionally include files/directories with glob patterns
     include: Vec<String>,
 
-    #[structopt(short, long)]
-    /// exclude file/directory from the bundle with glob patterns.
+    #[structopt(short, long, value_name = "GLOB")]
+    /// Exclude files/directories from the resulting bundle with glob patterns
     exclude: Vec<String>,
 
-    #[structopt(long)]
-    /// make directories in the resulting bundle
+    #[structopt(long, value_name = "PATH")]
+    /// Make directories in the resulting bundle
     mkdir: Vec<String>,
 
-    #[structopt(short = "r", long)]
-    /// specify installation path of the executable in the bundle
+    #[structopt(short = "r", long, value_name = "PATH")]
+    /// Specify the installation path of the executable in the bundle
     install_to: Option<String>,
 
-    #[structopt(long, default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
-    /// specify log output level
+    #[structopt(long, value_name = "LEVEL", default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
+    /// Specify the log level
     log_level: log::LevelFilter,
 
     #[structopt(short, long)]
-    /// verbose mode. same as --log-level Info
+    /// Verbose mode, same as --log-level Info
     verbose: bool,
 
-    #[structopt(short, long)]
-    /// enable testing
+    #[structopt(short, long, value_name = "COMMAND")]
+    /// Test the resulting bundle with specified command
     test: Option<String>,
 
     #[structopt(short, long)]
-    /// enable dynamic analysis
+    /// Enable dynamic analysis
     dynamic: bool,
 
-    #[structopt(long, allow_hyphen_values = true, number_of_values = 1)]
-    /// arguments passed to the executable in dynamic analysis
+    #[structopt(
+        long,
+        value_name = "ARG",
+        allow_hyphen_values = true,
+        number_of_values = 1
+    )]
+    /// Specify arguments passed to the executable in --dynamic
     dynamic_arg: Vec<String>,
 
-    #[structopt(long)]
-    /// arguments passed to the executable in dynamic analysis
+    #[structopt(long, value_name = "CONTENT")]
+    /// Specify stdin content supplied to the executable in --dynamic
     dynamic_stdin: Option<String>,
 
     #[structopt(short, long)]
-    /// enable compression
+    /// Compression the executable with npx
     compress: bool,
 
-    #[structopt(long, allow_hyphen_values = true, number_of_values = 1)]
-    /// arguments passed to upx in --compress
+    #[structopt(
+        long,
+        value_name = "ARG",
+        allow_hyphen_values = true,
+        number_of_values = 1
+    )]
+    /// Specify arguments passed to upx in --compress
     upx_arg: Vec<String>,
 
-    #[structopt(long, default_value = "busybox")]
-    /// specify the path or name of busybox that would be used in testing.
+    #[structopt(long, value_name = "PATH or NAME", default_value = "busybox")]
+    /// Specify the path or name of busybox that would be used in testing
     busybox: String,
 
-    #[structopt(long, default_value = "upx")]
-    /// specify the path or name of upx that would be used in compression.
+    #[structopt(long, value_name = "PATH or NAME", default_value = "upx")]
+    /// Specify the path or name of upx that would be used in compression
     upx: String,
 
-    #[structopt(long, default_value = "cc", env = "CC")]
-    /// specify the path or name of c compiler that would be used in
-    /// the name resolution of shared library dependencies.
+    #[structopt(long, value_name = "PATH or NAME", default_value = "cc", env = "CC")]
+    /// Specify the path or name of c compiler that would be used in
+    /// the name resolution of shared library dependencies
     cc: String,
 }
 
