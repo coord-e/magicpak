@@ -189,6 +189,9 @@ where
         "/usr/lib/ld-linux.so.2",
         "/usr/lib64/ld-linux-x86-64.so.2",
         "/usr/libx32/ld-linux-x32.so.2",
+        "/lib/ld-linux.so.2",
+        "/lib64/ld-linux-x86-64.so.2",
+        "/libx32/ld-linux-x32.so.2",
     ];
     for rtld in rtld_list {
         let path = Path::new(rtld);
