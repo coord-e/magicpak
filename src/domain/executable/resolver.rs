@@ -1,12 +1,11 @@
-use std::ffi::OsStr;
 use std::io::Write;
-use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, str};
+use std::str;
 
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
+use crate::domain::executable::SearchPaths;
 
 use log::debug;
 use tempfile::{NamedTempFile, TempPath};
@@ -37,13 +36,12 @@ int main(int argc, char** argv) {
 #[derive(Debug)]
 pub struct Resolver<'a> {
     program_path: TempPath,
-    rpaths: &'a Vec<PathBuf>,
-    runpaths: &'a Vec<PathBuf>,
+    search_paths: &'a SearchPaths,
 }
 
 impl<'a> Resolver<'a> {
     #[allow(clippy::ptr_arg)]
-    pub fn new<P>(interp: P, rpaths: &'a Vec<PathBuf>, runpaths: &'a Vec<PathBuf>) -> Result<Self>
+    pub fn new<P>(interp: P, search_paths: &'a SearchPaths) -> Result<Self>
     where
         P: AsRef<Path>,
     {
@@ -67,8 +65,7 @@ impl<'a> Resolver<'a> {
 
         let resolver = Resolver {
             program_path,
-            rpaths,
-            runpaths,
+            search_paths,
         };
 
         debug!("resolver: created resolver {:?}", resolver);
@@ -76,7 +73,6 @@ impl<'a> Resolver<'a> {
     }
 
     // lookup_rpath --> lookup_env --> lookup_runpath --> lookup_rest
-    // TODO: implement Rpath token expansion
     // TODO: take secure-execution mode into consideration
     pub fn lookup(&self, name: &str) -> Result<PathBuf> {
         if let Some(path) = self.lookup_rpath(name) {
@@ -84,7 +80,7 @@ impl<'a> Resolver<'a> {
             return Ok(path);
         }
 
-        if let Some(path) = self.lookup_env(name)? {
+        if let Some(path) = self.lookup_env(name) {
             debug!(
                 "resolver: {} => {} (by LD_LIBRARY_PATH)",
                 name,
@@ -105,25 +101,25 @@ impl<'a> Resolver<'a> {
     }
 
     fn lookup_rpath(&self, name: &str) -> Option<PathBuf> {
-        self.rpaths.iter().find_map(|x| try_joined(x, name))
+        if self.search_paths.runpath().is_some() {
+            return None;
+        }
+
+        self.search_paths
+            .iter_rpaths()
+            .find_map(|x| try_joined(x, name))
     }
 
     fn lookup_runpath(&self, name: &str) -> Option<PathBuf> {
-        self.runpaths.iter().find_map(|x| try_joined(x, name))
+        self.search_paths
+            .iter_runpaths()
+            .find_map(|x| try_joined(x, name))
     }
 
-    fn lookup_env(&self, name: &str) -> Result<Option<PathBuf>> {
-        if let Some(paths_str) = env::var_os("LD_LIBRARY_PATH") {
-            debug!("resolver: LD_LIBRARY_PATH={}", paths_str.to_string_lossy());
-
-            let result = paths_str
-                .into_vec()
-                .split(|c| char::from(*c) == ':' || char::from(*c) == ';')
-                .find_map(|x| try_joined(OsStr::from_bytes(x), name));
-            Ok(result)
-        } else {
-            Ok(None)
-        }
+    fn lookup_env(&self, name: &str) -> Option<PathBuf> {
+        self.search_paths
+            .iter_ld_library_paths()
+            .find_map(|x| try_joined(x, name))
     }
 
     fn lookup_rest(&self, name: &str) -> Result<PathBuf> {

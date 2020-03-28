@@ -1,7 +1,8 @@
 use std::ffi::OsStr;
-use std::fs;
+use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::{env, fs};
 
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
@@ -13,6 +14,8 @@ use log::{debug, info, warn};
 use tempfile::{NamedTempFile, TempPath};
 
 mod resolver;
+mod search_paths;
+use search_paths::SearchPaths;
 
 #[derive(Debug)]
 enum ExecutableLocation {
@@ -35,8 +38,7 @@ pub struct Executable {
     name: String,
     interpreter: Option<PathBuf>,
     libraries: Vec<String>,
-    rpaths: Vec<PathBuf>,
-    runpaths: Vec<PathBuf>,
+    search_paths: SearchPaths,
 }
 
 impl Executable {
@@ -59,11 +61,11 @@ impl Executable {
             }
             interp
         };
-        let (mut rpaths, runpaths) = collect_paths(&elf)?;
+        let mut search_paths = collect_paths(&elf, location.as_ref())?;
         let libraries = elf.libraries.into_iter().map(ToOwned::to_owned).collect();
 
-        if let Some(mut paths) = propagated_rpaths {
-            rpaths.append(&mut paths);
+        if let Some(paths) = propagated_rpaths {
+            search_paths.append_rpath(paths);
         }
 
         let exe = Executable {
@@ -71,8 +73,7 @@ impl Executable {
             name,
             interpreter,
             libraries,
-            rpaths,
-            runpaths,
+            search_paths,
         };
 
         debug!("exe: loaded {:?}", exe);
@@ -121,7 +122,7 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(&interpreter, &self.rpaths, &self.runpaths)?;
+        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths)?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
@@ -131,7 +132,7 @@ impl Executable {
             // TODO: cache once traversed
             // TODO: deal with semantic inconsistency (Executable on shared object)
             let mut children =
-                Executable::load_with_rpaths(path.clone(), Some(self.rpaths.clone()))?
+                Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
                     .dynamic_libraries()?;
 
             paths.push(path);
@@ -206,26 +207,42 @@ where
     Ok(None)
 }
 
-fn collect_paths(elf: &Elf<'_>) -> Result<(Vec<PathBuf>, Vec<PathBuf>)> {
-    let mut rpaths = Vec::new();
-    let mut runpaths = Vec::new();
-    match elf {
-        Elf {
-            dynamic: Some(dynamic),
-            dynstrtab,
-            ..
-        } => {
-            for d in &dynamic.dyns {
-                if d.d_tag == DT_RUNPATH {
-                    runpaths.append(&mut get_paths_in_strtab(d, dynstrtab)?);
-                } else if d.d_tag == DT_RPATH {
-                    rpaths.append(&mut get_paths_in_strtab(d, dynstrtab)?);
-                }
+fn collect_paths(elf: &Elf<'_>, executable_path: &Path) -> Result<SearchPaths> {
+    debug_assert!(executable_path.is_absolute());
+    // unwrap is ok here because the path points to file and is absolute
+    let origin = executable_path.parent().unwrap();
+    let mut paths = SearchPaths::new(origin.into());
+
+    if let Elf {
+        dynamic: Some(dynamic),
+        dynstrtab,
+        ..
+    } = elf
+    {
+        for d in &dynamic.dyns {
+            if d.d_tag == DT_RUNPATH {
+                paths.append_runpath(get_paths_in_strtab(d, dynstrtab)?);
+            } else if d.d_tag == DT_RPATH {
+                paths.append_rpath(get_paths_in_strtab(d, dynstrtab)?);
             }
-            Ok((rpaths, runpaths))
         }
-        _ => Ok((Vec::new(), Vec::new())),
     }
+
+    if let Some(paths_str) = env::var_os("LD_LIBRARY_PATH") {
+        debug!(
+            "executable: LD_LIBRARY_PATH={}",
+            paths_str.to_string_lossy()
+        );
+
+        paths.append_ld_library_path(
+            paths_str
+                .into_vec()
+                .split(|b| *b == b':' || *b == b';')
+                .map(|x| OsStr::from_bytes(x)),
+        );
+    }
+
+    Ok(paths)
 }
 
 fn get_paths_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<Vec<PathBuf>> {
