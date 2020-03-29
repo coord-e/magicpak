@@ -44,7 +44,7 @@ struct Opt {
 
     #[structopt(short, long)]
     /// Enable testing
-    enable_test: bool,
+    test: bool,
 
     #[structopt(long, value_name = "COMMAND")]
     /// Specify the test command to use in --test
@@ -60,7 +60,7 @@ struct Opt {
 
     #[structopt(short, long)]
     /// Enable dynamic analysis
-    enable_dynamic: bool,
+    dynamic: bool,
 
     #[structopt(
         long,
@@ -161,7 +161,7 @@ fn main() {
     };
 
     fern::Dispatch::new()
-        .format(|out, message, _| out.finish(format_args!("[magicpak] {}", message)))
+        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
         .level(log_level)
         .chain(std::io::stderr())
         .apply()
