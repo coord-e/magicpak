@@ -4,21 +4,28 @@ use std::process::{Command, Stdio};
 use crate::base::log::{ChildLogExt, CommandLogExt};
 use crate::base::{Error, Result};
 use crate::domain::jail::CommandJailExt;
-use crate::domain::Bundle;
+use crate::domain::{Bundle, Executable};
 
 use log::info;
 
-pub fn test<S, T>(
+pub fn test<S, T, U>(
     bundle: &Bundle,
-    command: &str,
-    command_stdin: Option<S>,
-    command_stdout: Option<T>,
+    exe: &Executable,
+    command: Option<S>,
+    command_stdin: Option<T>,
+    command_stdout: Option<U>,
     busybox: &str,
 ) -> Result<()>
 where
     S: AsRef<str>,
     T: AsRef<str>,
+    U: AsRef<str>,
 {
+    let command = command
+        .as_ref()
+        .map(AsRef::as_ref)
+        .unwrap_or_else(|| exe.name());
+
     info!("action: test the bundle with command '{}'", command);
 
     let busybox_path = which::which(busybox)?;

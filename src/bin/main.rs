@@ -42,12 +42,16 @@ struct Opt {
     /// Verbose mode, same as --log-level Info
     verbose: bool,
 
-    #[structopt(short, long, value_name = "COMMAND")]
-    /// Test the resulting bundle with specified command
-    test: Option<String>,
+    #[structopt(short, long)]
+    /// Enable testing
+    test: bool,
+
+    #[structopt(long, value_name = "COMMAND")]
+    /// Specify the test command to use in --test
+    test_command: Option<String>,
 
     #[structopt(long, value_name = "CONTENT")]
-    /// Supply the content to stdin of the test command
+    /// Specify stdin content supplied to the test command in --test
     test_stdin: Option<String>,
 
     #[structopt(long, value_name = "CONTENT")]
@@ -131,10 +135,11 @@ fn run(opt: &Opt) -> Result<()> {
         action::exclude_glob(&mut bundle, &glob)?;
     }
 
-    if let Some(command) = &opt.test {
+    if opt.test {
         action::test(
             &bundle,
-            &command,
+            &exe,
+            opt.test_command.as_ref(),
             opt.test_stdin.as_ref(),
             opt.test_stdout.as_ref(),
             &opt.busybox,
