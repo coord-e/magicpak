@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
 use crate::base::error;
+use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
@@ -38,7 +39,7 @@ where
     .stdin(Stdio::piped())
     .stdout(Stdio::piped())
     .stderr(Stdio::piped())
-    .spawn()?;
+    .spawn_with_log()?;
     let child_pid = nix::unistd::Pid::from_raw(child.id() as i32);
 
     if let Some(content) = stdin {

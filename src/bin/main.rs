@@ -44,7 +44,7 @@ struct Opt {
 
     #[structopt(short, long)]
     /// Enable testing
-    test: bool,
+    enable_test: bool,
 
     #[structopt(long, value_name = "COMMAND")]
     /// Specify the test command to use in --test
@@ -60,7 +60,7 @@ struct Opt {
 
     #[structopt(short, long)]
     /// Enable dynamic analysis
-    dynamic: bool,
+    enable_dynamic: bool,
 
     #[structopt(
         long,
