@@ -16,6 +16,7 @@ pub enum Error {
     InterpretorNotFound,
     BusyBoxInstall(String),
     TestFailed(String),
+    TestStdoutMismatch { expected: String, got: String },
     ExecutableLocateFailed(which::Error),
     Upx(String),
     DynamicFailed(i32),
@@ -58,6 +59,11 @@ impl fmt::Display for Error {
                 e
             ),
             Error::TestFailed(cmd) => write!(f, "Test failed: {} returned non-zero exit code", cmd),
+            Error::TestStdoutMismatch { expected, got } => write!(
+                f,
+                "Test failed: Test command stdout mismatch. expected: '{}', but got '{}'",
+                expected, got
+            ),
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
             Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),

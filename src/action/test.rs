@@ -57,7 +57,10 @@ where
     if let Some(content) = command_stdout {
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
         if stdout != content.as_ref() {
-            return Err(Error::TestFailed(command.to_owned()));
+            return Err(Error::TestStdoutMismatch {
+                expected: content.as_ref().to_string(),
+                got: stdout,
+            });
         }
     }
 
