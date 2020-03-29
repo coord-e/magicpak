@@ -30,7 +30,10 @@ where
 
     let busybox_path = which::which(busybox)?;
 
-    let jail = bundle.create_jail()?;
+    let mut test_bundle = bundle.clone();
+    test_bundle.add_pseudo_proc(exe);
+
+    let jail = test_bundle.create_jail()?;
     jail.install_busybox(busybox_path)?;
 
     let mut child = Command::new("/bin/sh")

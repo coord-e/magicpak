@@ -4,7 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::base::Result;
-use crate::domain::{BundlePath, BundlePathBuf, Jail, Resource};
+use crate::domain::{BundlePath, BundlePathBuf, Executable, Jail, Resource};
 
 use log::{debug, info, warn};
 
@@ -104,6 +104,11 @@ impl Bundle {
             }
         }
         Ok(())
+    }
+
+    pub fn add_pseudo_proc(&mut self, exe: &Executable) {
+        // TODO: using symlink would be better
+        self.add_file_from(BundlePath::new("proc/self/exe"), exe.path());
     }
 
     pub fn create_jail(&self) -> Result<Jail> {
