@@ -47,6 +47,10 @@ struct Opt {
     test: Option<String>,
 
     #[structopt(long, value_name = "CONTENT")]
+    /// Supply the content to stdin of the test command
+    test_stdin: Option<String>,
+
+    #[structopt(long, value_name = "CONTENT")]
     /// Test stdout of the test command
     test_stdout: Option<String>,
 
@@ -128,7 +132,13 @@ fn run(opt: &Opt) -> Result<()> {
     }
 
     if let Some(command) = &opt.test {
-        action::test(&bundle, &command, opt.test_stdout.as_ref(), &opt.busybox)?;
+        action::test(
+            &bundle,
+            &command,
+            opt.test_stdin.as_ref(),
+            opt.test_stdout.as_ref(),
+            &opt.busybox,
+        )?;
     }
 
     action::emit(&mut bundle, &opt.output)?;
