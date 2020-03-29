@@ -1,14 +1,14 @@
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::str;
+use std::{env, str};
 
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 use crate::domain::executable::SearchPaths;
 
 use log::debug;
-use tempfile::{NamedTempFile, TempPath};
+use tempfile::NamedTempFile;
 
 static RESOLVER_SOURCE_CODE: &str = r"
 #define _GNU_SOURCE
@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
 
 #[derive(Debug)]
 pub struct Resolver<'a> {
-    program_path: TempPath,
+    program_path: PathBuf,
     search_paths: &'a SearchPaths,
 }
 
@@ -45,24 +45,10 @@ impl<'a> Resolver<'a> {
         P: AsRef<Path>,
         Q: AsRef<Path>,
     {
-        let mut source = NamedTempFile::new()?;
-        write!(source, "{}", RESOLVER_SOURCE_CODE)?;
-        let source_path = source.into_temp_path();
-        let program_path = NamedTempFile::new()?.into_temp_path();
-
-        let output = Command::new(cc_path.as_ref())
-            .arg(format!("-Wl,-dynamic-linker,{}", interp.as_ref().display()))
-            .arg("-ldl")
-            .arg("-o")
-            .arg(&program_path)
-            .arg("-xc")
-            .arg(&source_path)
-            .output_with_log()?;
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr).to_string();
-            return Err(Error::ResolverCompilation(stderr));
+        let program_path = calc_program_path(&interp, &cc_path);
+        if !program_path.exists() {
+            build_resolver_program(&program_path, &interp, &cc_path)?;
         }
-        source_path.close()?;
 
         let resolver = Resolver {
             program_path,
@@ -135,6 +121,60 @@ impl<'a> Resolver<'a> {
 
         Ok(str::from_utf8(&output.stdout)?.trim().to_string().into())
     }
+}
+
+fn calc_program_path<P, Q>(interp: P, cc_path: Q) -> PathBuf
+where
+    P: AsRef<Path>,
+    Q: AsRef<Path>,
+{
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let interp_hash = {
+        let mut s = DefaultHasher::new();
+        interp.as_ref().hash(&mut s);
+        s.finish()
+    };
+
+    let cc_path_hash = {
+        let mut s = DefaultHasher::new();
+        cc_path.as_ref().hash(&mut s);
+        s.finish()
+    };
+
+    let mut path = env::temp_dir();
+    path.push(format!(
+        "magicpak_resolver_{}_{}",
+        interp_hash, cc_path_hash
+    ));
+    path
+}
+
+fn build_resolver_program<P, Q, R>(program_path: P, interp: Q, cc_path: R) -> Result<()>
+where
+    P: AsRef<Path>,
+    Q: AsRef<Path>,
+    R: AsRef<Path>,
+{
+    let mut source = NamedTempFile::new()?;
+    write!(source, "{}", RESOLVER_SOURCE_CODE)?;
+    let source_path = source.into_temp_path();
+
+    let output = Command::new(cc_path.as_ref())
+        .arg(format!("-Wl,-dynamic-linker,{}", interp.as_ref().display()))
+        .arg("-ldl")
+        .arg("-o")
+        .arg(program_path.as_ref())
+        .arg("-xc")
+        .arg(&source_path)
+        .output_with_log()?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).to_string();
+        return Err(Error::ResolverCompilation(stderr));
+    }
+    source_path.close()?;
+    Ok(())
 }
 
 fn try_joined<P, Q>(path1: P, path2: Q) -> Option<PathBuf>
