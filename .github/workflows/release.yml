@@ -24,7 +24,7 @@ jobs:
       - run: PUSH_IMAGES=true ./dockerfile/build.sh
   release:
     name: Release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         target: [x86_64-unknown-linux-musl]
@@ -35,6 +35,7 @@ jobs:
           toolchain: stable
           target: ${{ matrix.target }}
           default: true
+      - run: sudo apt-get install -y musl-tools
       - uses: actions-rs/cargo@v1
         with:
           command: build
