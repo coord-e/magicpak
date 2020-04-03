@@ -76,7 +76,7 @@ struct Opt {
     dynamic_stdin: Option<String>,
 
     #[structopt(short, long)]
-    /// Compression the executable with npx
+    /// Compress the executable with npx
     compress: bool,
 
     #[structopt(
