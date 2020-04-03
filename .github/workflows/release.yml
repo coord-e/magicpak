@@ -1,0 +1,52 @@
+on:
+  push:
+    tags: ['*']
+
+name: Release
+
+jobs:
+  upload:
+    name: Upload to crates.io
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/cargo@v1
+        with:
+          command: publish
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  build_docker_images:
+    name: Build and push docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - run: PUSH_IMAGES=true ./dockerfile/build.sh
+  release:
+    name: Release
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        target: [x86_64-unknown-linux-musl]
+    steps:
+      - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          default: true
+      - run: sudo apt-get install -y musl-tools
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features --target=${{ matrix.target }}
+      - uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --release --all-features --target=${{ matrix.target }}
+      - run: mv target/${{ matrix.target }}/release/magicpak magicpak-${{ matrix.target }}
+      - uses: softprops/action-gh-release@v1
+        with:
+          files: magicpak-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
