@@ -2,8 +2,9 @@
 
 set -euo pipefail
 
-readonly SCRIPT_DIR="$(dirname "$0")"
+readonly PUSH_IMAGES="${PUSH_IMAGES:-false}"
 
+readonly SCRIPT_DIR="$(dirname "$0")"
 readonly CONFIG_FILE="$SCRIPT_DIR/images.json"
 
 function info() {
@@ -25,6 +26,11 @@ function query_image() {
   query ".\"$1\"$2"
 }
 
+function run() {
+  info "$1"
+  eval "$1"
+}
+
 function get_build_args() {
   local -r image="$1"
   for name in $(query_image "$image" ".args | keys[]"); do
@@ -37,7 +43,7 @@ function get_build_args() {
 function build_image() {
   local -r image="$1"
 
-  local base base_image command
+  local base base_image
   base=$(query_image "$image" .base)
   base_image=$(query_image "$image" .image)
 
@@ -47,9 +53,8 @@ function build_image() {
   fi
 
   for tag in $(query_image "$image" .tags[]); do
-    command="docker build "$SCRIPT_DIR/$base" --tag "$image:$tag" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
-    info "$command"
-    eval "$command"
+    run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
+    "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
   done
 }
 
