@@ -8,9 +8,13 @@ readonly SCRIPT_DIR="$(dirname "$0")"
 readonly CONFIG_FILE="$SCRIPT_DIR/images.json"
 
 function info() {
-  tput bold
-  echo "$@"
-  tput sgr0
+  if [ -t 1 ] && [ -v TERM ] && type tput > /dev/null 2>&1; then
+    tput bold
+    echo "$@"
+    tput sgr0
+  else
+    echo "$@"
+  fi
 }
 
 function error() {
