@@ -1,5 +1,6 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
+use std::process::ExitStatus;
 use std::{error, fmt, io, result, str};
 
 use ::goblin::error as goblin;
@@ -19,7 +20,7 @@ pub enum Error {
     TestStdoutMismatch { expected: String, got: String },
     ExecutableLocateFailed(which::Error),
     Upx(String),
-    DynamicFailed(i32),
+    DynamicFailed(ExitStatus),
     DynamicSignaled(nix::sys::signal::Signal),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
@@ -67,11 +68,9 @@ impl fmt::Display for Error {
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
             Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
-            Error::DynamicFailed(code) => write!(
-                f,
-                "Dynamic analysis subproecss failed with exit code {}",
-                code
-            ),
+            Error::DynamicFailed(status) => {
+                write!(f, "Dynamic analysis subproecss failed: {}", status)
+            }
             Error::DynamicSignaled(sig) => {
                 write!(f, "Dynamic analysis subproecss killed with {}", sig)
             }

@@ -2,7 +2,7 @@ use std::ffi::OsStr;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fs};
+use std::{env, fs, io};
 
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
@@ -84,9 +84,13 @@ impl Executable {
     where
         P: AsRef<Path>,
     {
-        let path = exe_path.as_ref().canonicalize()?;
+        let path = exe_path.as_ref();
+        if path.is_dir() {
+            return Err(Error::IO(io::Error::from_raw_os_error(21)));
+        }
+
         let location = ExecutableLocation::Fixed(path.to_owned());
-        // unwrap is ok because `path` here is canonicalized
+        // unwrap is ok because `path` here is not a directory
         let file_name = path.file_name().unwrap();
         let file_name_str = file_name
             .to_str()

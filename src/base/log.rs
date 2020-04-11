@@ -39,7 +39,7 @@ impl ChildLogExt for Child {
     }
 }
 
-fn log_output(command_line: &str, output: &Output) {
+pub fn log_output(command_line: &str, output: &Output) {
     let mut message = format!("command: {}\n  => {}", command_line, output.status);
 
     if !output.stdout.is_empty() {
