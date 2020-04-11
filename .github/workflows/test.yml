@@ -30,6 +30,12 @@ jobs:
           for example in ./example/*; do
             docker build "$example"
           done
+  build_docker_images:
+    name: Build docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: ./dockerfile/build.sh
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
