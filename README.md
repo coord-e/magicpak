@@ -20,21 +20,21 @@ COPY --from=0 /bundle /.
 CMD ["/bin/your_executable"]
 ```
 
-That's it! The resulting image shall only contains what your executable requires at runtime. You can find more useful examples of `magicpak` under [example/](/example).
+That's it! The resulting image shall only contain what your executable requires at runtime. You can find more useful examples of `magicpak` under [example/](/example).
 
 ## Feature
 
 `magicpak` is a command-line utility that analyzes and bundles runtime dependencies of the executable.  `magicpak` basically collects all shared object dependencies that are required by a dynamic linker at runtime. Additionally, `magicpak`'s contributions are summarized as follows:
 
 - **Simple**. You can build a minimal image just by adding a few lines to your `Dockerfile`.
-- **Full featured**. You can bundle, test, and compress your executable at once. You can focus on your business because `magicpak` handles all `Dockerfile`-specific matters to decrease image size.
+- **Full-featured**. You can bundle, test, and compress your executable at once. You can focus on your business because `magicpak` handles all `Dockerfile`-specific matters to decrease image size.
 - **Dynamic analysis**. `--dynamic` flag enables a dynamic analysis that can discover dependencies other than dynamically linked libraries.
 - **Flexible**. We expose a full control of resulting bundle with a family of options like `--include` and  `--exclude`. You can deal with dependencies that cannot be detected automatically.
 - **Stable**. We don't parse undocumented and sometimes inaccurate ldd(1) outputs. Instead, we use dlopen(3) and dlinfo(3) in glibc to query shared library locations to ld.so(8).
 
 ## Usage
 
-You can start with `magicpak path/to/executable path/to/output`. This simply analyzes runtime dependencies of your executable statically, and put everything your executable needs in runtime to the specified output directory. Once they've bundled, we can simply copy them to the `scratch` image in the second stage as follows.
+You can start with `magicpak path/to/executable path/to/output`. This simply analyzes runtime dependencies of your executable statically and put everything your executable needs in runtime to the specified output directory. Once they've bundled, we can simply copy them to the `scratch` image in the second stage as follows.
 
 ```dockerfile
 RUN magicpak path/to/executable /bundle
@@ -43,11 +43,11 @@ FROM scratch
 COPY --from=0 /bundle /.
 ```
 
-Some executables works well in this way. However, others fail to run properly because `magicpak`'s static analysis isn't enough to detect all files needed by them at runtime. For this case, `magicpak` has `--include <GLOB>` option to specify the missing requirements manually. Moreover, you can use `--dynamic` to automatically include files that are accessed by the executable during execution.
+Some executables work well in this way. However, others fail to run properly because `magicpak`'s static analysis isn't enough to detect all files needed by them at runtime. For this case, `magicpak` has `--include <GLOB>` option to specify the missing requirements manually. Moreover, you can use `--dynamic` to automatically include files that are accessed by the executable during execution.
 
-Despite of our careful implementation, our analysis is unreliable in a way because we can't completely determine the runtime behavior before its execution. To ensure that `magicpak` collected all dependenties to perform a specific task, `--test` option is implemented. `--test` enables testing of the resulting bundle using chroot(2).
+Despite our careful implementation, our analysis is unreliable in a way because we can't completely determine the runtime behavior before its execution. To ensure that `magicpak` collected all dependencies to perform a specific task, `--test` option is implemented. `--test` enables testing of the resulting bundle using chroot(2).
 
-The size of resulting image is our main concern. `magicpak` supports executable compression using `upx`. You can enable it with `--compress`.
+The size of the resulting image is our main concern. `magicpak` supports executable compression using `upx`. You can enable it with `--compress`.
 
 ### Supported options
 
@@ -78,7 +78,7 @@ The size of resulting image is our main concern. `magicpak` supports executable 
 
 ### Docker images
 
-We provide some base images that contains `magicpak` and its optional dependencies to get started.
+We provide some base images that contain `magicpak` and its optional dependencies to get started.
 
 | name                                                         | description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
