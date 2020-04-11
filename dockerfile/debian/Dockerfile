@@ -21,6 +21,5 @@ RUN cd /tmp \
       && mv upx /bin/ \
       && rm upx.tar.xz
 
-ADD http://localhost:3000/magicpak /bin/magicpak
-# ADD https://github.com/coord-e/magicpak/releases/download/v${MAGICPAK_VERSION}/magicpak-x86_64-unknown-linux-musl /bin/magicpak
+ADD https://github.com/coord-e/magicpak/releases/download/v${MAGICPAK_VERSION}/magicpak-x86_64-unknown-linux-musl /bin/magicpak
 RUN chmod +x /bin/magicpak
