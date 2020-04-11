@@ -21,6 +21,15 @@ jobs:
         with:
           command: test
           args: --release --all-features --target=${{ matrix.target }}
+  test_examples:
+    name: Test examples
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: |
+          for example in ./example/*; do
+            docker build "$example"
+          done
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
