@@ -26,16 +26,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - run: |
+      - name: Build images
+        run: DISABLE_CACHE=true ./dockerfile/build.sh
+      - name: Build examples
+        run: |
           for example in ./example/*; do
             docker build --no-cache "$example"
           done
-  build_docker_images:
-    name: Build docker images
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@master
-      - run: DISABLE_CACHE=true ./dockerfile/build.sh
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
