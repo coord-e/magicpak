@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - run: ./dockerfile/build.sh
+      - run: DISABLE_CACHE=true ./dockerfile/build.sh
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
