@@ -65,6 +65,8 @@ function build_image() {
 
     "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
   done
+
+  return 0
 }
 
 function main() {
