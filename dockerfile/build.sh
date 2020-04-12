@@ -3,7 +3,7 @@
 set -euo pipefail
 
 readonly PUSH_IMAGES="${PUSH_IMAGES:-false}"
-readonly DISABLE_CACHE="${DISABLE_CACHE:-false}"
+readonly CLEAN_AFTER_BUILD="${CLEAN_AFTER_BUILD:-false}"
 
 readonly SCRIPT_DIR="$(dirname "$0")"
 readonly CONFIG_FILE="$SCRIPT_DIR/images.json"
@@ -57,13 +57,11 @@ function build_image() {
     exit 1
   fi
 
-  local no_cache=""
-  "$DISABLE_CACHE" && no_cache="--no-cache"
-
   for tag in $(query_image "$image" .tags[]); do
-    run "docker build \"$SCRIPT_DIR/$base\" $no_cache --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
+    run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
 
     "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
+    "$CLEAN_AFTER_BUILD" && run "docker image ls --filter \"since=$base_image:$tag\" --filter \"before=$image:$tag\" --quiet | xargs docker image rm --force \"$base_image:$tag\""
   done
 
   return 0
@@ -79,6 +77,8 @@ function main() {
       build_image "$image"
     done
   fi
+
+  return 0
 }
 
 main "$@"

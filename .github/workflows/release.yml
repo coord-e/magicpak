@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-      - run: PUSH_IMAGES=true DISABLE_CACHE=true ./dockerfile/build.sh
+      - run: PUSH_IMAGES=true CLEAN_AFTER_BUILD=true ./dockerfile/build.sh
   release:
     name: Release
     runs-on: ubuntu-18.04
