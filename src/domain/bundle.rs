@@ -96,6 +96,7 @@ impl Bundle {
                 Source::NewFile(blob) => {
                     let path = bpath.reify(&dest);
                     info!("emit: write {} (content omitted)", path.display());
+                    create_parent_dir(&path)?;
                     fs::write(path, blob)?
                 }
                 Source::CopyFrom(src_path) => {
@@ -120,6 +121,16 @@ impl Bundle {
     }
 }
 
+fn create_parent_dir<P>(path: P) -> Result<()>
+where
+    P: AsRef<Path>,
+{
+    match path.as_ref().parent() {
+        Some(parent) if !parent.exists() => fs::create_dir_all(parent).map_err(Into::into),
+        _ => Ok(()),
+    }
+}
+
 // We don't use `fs::copy` directly because we want to respect symlinks.
 // Also `fs::canonicalize` is not used because we don't want to skip intermediate links.
 fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
@@ -130,10 +141,7 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
     let target = to.reify(dest);
     debug_assert!(target.is_absolute());
 
-    match target.parent() {
-        Some(parent) if !parent.exists() => fs::create_dir_all(parent)?,
-        _ => (),
-    }
+    create_parent_dir(&target)?;
 
     if !from.exists() {
         warn!(
@@ -165,6 +173,112 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
     } else {
         info!("emit: copy {} => {}", from.display(), target.display());
         fs::copy(from, target)?;
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_fs::prelude::*;
+    use predicates::prelude::*;
+    use std::os::unix;
+
+    #[test]
+    fn test_sync_copy() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let src = assert_fs::NamedTempFile::new("x.txt")?;
+        src.write_str("hello")?;
+        let bundle_path = BundlePath::new("a/b/c.txt");
+        sync_copy(src.path(), bundle_path, dest.path())?;
+        dest.child("a/b/c.txt").assert("hello");
+        Ok(())
+    }
+
+    #[test]
+    fn test_sync_copy_nonexistent() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let src = assert_fs::TempDir::new()?.child("nonexistent.txt");
+        let bundle_path = BundlePath::new("a/b/c.txt");
+        sync_copy(src.path(), bundle_path, dest.path())?;
+        dest.child("a/b/c.txt").assert(predicate::path::missing());
+        Ok(())
+    }
+
+    #[test]
+    fn test_sync_copy_link() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let src_dir = assert_fs::TempDir::new()?;
+        let src = src_dir.child("x.txt");
+        src.touch()?;
+        src.write_str("hello")?;
+        let link = src_dir.child("y.txt");
+        unix::fs::symlink(src.path(), link.path())?;
+
+        let bundle_path = BundlePath::new("a/b/c.txt");
+        sync_copy(link.path(), bundle_path, dest.path())?;
+
+        assert!(fs::symlink_metadata(dest.child("a/b/c.txt").path())?
+            .file_type()
+            .is_symlink());
+        // dest.child("a/b/c.txt")
+        //     .assert(predicate::path::is_symlink());
+        dest.child("a/b/c.txt").assert("hello");
+
+        let bundle_src_path = dest.child(src.path().strip_prefix("/").unwrap());
+        bundle_src_path.assert("hello");
+        bundle_src_path.assert(predicate::path::is_file());
+        Ok(())
+    }
+
+    #[test]
+    fn test_mkdir() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let mut bundle = Bundle::new();
+        bundle.mkdir(BundlePath::new("dir/dirdir"));
+        bundle.emit(dest.path())?;
+
+        dest.child("dir/dirdir").assert(predicate::path::is_dir());
+        Ok(())
+    }
+
+    #[test]
+    fn test_add_file() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let mut bundle = Bundle::new();
+        bundle.add_file(BundlePath::new("dir/text.txt"), b"hello".to_vec());
+        bundle.emit(dest.path())?;
+
+        dest.child("dir/text.txt").assert("hello");
+        Ok(())
+    }
+
+    #[test]
+    fn test_add_file_from() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+        let src = assert_fs::NamedTempFile::new("x.txt")?;
+        src.write_str("hello")?;
+
+        let mut bundle = Bundle::new();
+        bundle.add_file_from(BundlePath::new("dir/text.txt"), src.path());
+        bundle.emit(dest.path())?;
+
+        dest.child("dir/text.txt").assert("hello");
+        Ok(())
+    }
+
+    #[test]
+    fn test_filter() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let dest = assert_fs::TempDir::new()?;
+
+        let mut bundle = Bundle::new();
+        bundle.add_file(BundlePath::new("a.txt"), b"hello1".to_vec());
+        bundle.add_file(BundlePath::new("b.txt"), b"hello2".to_vec());
+        bundle.filter(|path| path.to_str_lossy().contains("a"));
+        bundle.emit(dest.path())?;
+
+        dest.child("a.txt").assert("hello1");
+        dest.child("b.txt").assert(predicate::path::missing());
         Ok(())
     }
 }

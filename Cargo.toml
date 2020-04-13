@@ -30,3 +30,7 @@ fern = "0.6.0"
 which = "3.1.1"
 libc = "0.2.68"
 auxv = "0.3.3"
+
+[dev-dependencies]
+assert_fs = "1.0.0"
+predicates = "1.0.4"
