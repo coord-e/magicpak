@@ -33,7 +33,9 @@ impl Jail {
             busybox_path.as_ref().display(),
             busybox_jail_path.display()
         );
-        fs::create_dir(&bindir)?;
+        if !bindir.exists() {
+            fs::create_dir(&bindir)?;
+        }
         fs::copy(&busybox_path, &busybox_jail_path)?;
         fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(755))?;
 
