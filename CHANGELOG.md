@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.3] - 2020-04-14
+
+- Fixed `--test` behavior when the resulting bundle contains `/bin/`.
+
 ## [1.0.2] - 2020-04-14
 
 - Fixed `--compress` when the executable is symlinked.
