@@ -1,3 +1,4 @@
+use std::os::unix::fs::PermissionsExt;
 use std::os::unix::process::CommandExt;
 use std::path::Path;
 use std::process::Command;
@@ -32,7 +33,9 @@ impl Jail {
             busybox_path.as_ref().display(),
             busybox_jail_path.display()
         );
+        fs::create_dir(&bindir)?;
         fs::copy(&busybox_path, &busybox_jail_path)?;
+        fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(755))?;
 
         let output = Command::new(busybox_jail_path)
             .arg("--install")
@@ -72,5 +75,63 @@ impl CommandJailExt for Command {
                 env::set_current_dir("/")
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_cmd::prelude::*;
+    use assert_fs::prelude::*;
+    use predicates::prelude::*;
+    use std::io::Read;
+    use std::process::Command;
+
+    fn download_busybox(
+    ) -> std::result::Result<assert_fs::NamedTempFile, Box<dyn std::error::Error>> {
+        let url =
+            "https://busybox.net/downloads/binaries/1.31.0-defconfig-multiarch-musl/busybox-x86_64";
+        let mut bytes = Vec::new();
+        reqwest::blocking::get(url)?.read_to_end(&mut bytes)?;
+        let dest = assert_fs::NamedTempFile::new("busybox")?;
+        dest.write_binary(&bytes)?;
+        Ok(dest)
+    }
+
+    #[test]
+    fn test_install_busybox() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let jail = Jail::new()?;
+        jail.install_busybox(download_busybox()?.path())?;
+
+        assert_eq!(
+            true,
+            predicate::path::is_file().eval(&jail.path().join("bin/busybox"))
+        );
+        assert_eq!(
+            true,
+            predicate::path::is_file().eval(&jail.path().join("bin/sh"))
+        );
+        Ok(())
+    }
+
+    #[test]
+    #[ignore]
+    fn test_jail() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let jail = Jail::new()?;
+        jail.install_busybox(download_busybox()?.path())?;
+
+        Command::new("pwd")
+            .in_jail(&jail)
+            .assert()
+            .success()
+            .stdout("/\n");
+
+        Command::new("ls")
+            .in_jail(&jail)
+            .assert()
+            .success()
+            .stdout("bin\n");
+
+        Ok(())
     }
 }

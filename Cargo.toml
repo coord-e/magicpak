@@ -33,4 +33,6 @@ auxv = "0.3.3"
 
 [dev-dependencies]
 assert_fs = "1.0.0"
+assert_cmd = "1.0.1"
 predicates = "1.0.4"
+reqwest = { version = "0.10.4", features = ["blocking"] }
