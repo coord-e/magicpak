@@ -58,8 +58,11 @@ function build_image() {
 
   for tag in $(query_image "$image" .tags[]); do
     run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
+
     "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
   done
+
+  return 0
 }
 
 function main() {
@@ -72,6 +75,8 @@ function main() {
       build_image "$image"
     done
   fi
+
+  return 0
 }
 
 main "$@"

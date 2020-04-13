@@ -166,7 +166,7 @@ impl Executable {
         let output = Command::new(upx_path.as_ref())
             .args(upx_opts)
             .arg("--no-progress")
-            .arg(self.path())
+            .arg(self.path().canonicalize()?)
             .arg("-o")
             .arg(&result_path)
             .output_with_log()?;

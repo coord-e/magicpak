@@ -162,3 +162,41 @@ fn read_string_at(pid: nix::unistd::Pid, mut addr: u64) -> Result<OsString> {
         addr += 4;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_cmd::prelude::*;
+    use assert_fs::prelude::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
+
+    #[test]
+    fn test_trace() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        let test_path = assert_fs::NamedTempFile::new("test")?;
+        test_path.touch()?;
+        let child = Command::new("cat")
+            .arg(test_path.path())
+            .traceme()
+            .spawn()?;
+
+        let paths = Rc::new(RefCell::new(Vec::new()));
+        child
+            .trace_syscalls(SyscallHandler {
+                open: |pathname, _| paths.borrow_mut().push(pathname),
+                openat: |_, pathname, _| paths.borrow_mut().push(pathname),
+            })?
+            .assert()
+            .success();
+
+        assert_eq!(
+            true,
+            Rc::try_unwrap(paths)
+                .unwrap()
+                .into_inner()
+                .iter()
+                .any(|p| p == test_path.path())
+        );
+        Ok(())
+    }
+}

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.2] - 2020-04-14
+
+- Fixed `--compress` when the executable is symlinked.
+- Added many test cases.
+
 ## [1.0.1] - 2020-04-11
 
 - Fixed a problem on CI.
