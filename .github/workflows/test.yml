@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@master
       - name: Build images
-        run: CLEAN_AFTER_BUILD=true ./dockerfile/build.sh
+        run: ./dockerfile/build.sh
       - name: Build examples
         run: |
           for example in ./example/*; do

@@ -3,7 +3,6 @@
 set -euo pipefail
 
 readonly PUSH_IMAGES="${PUSH_IMAGES:-false}"
-readonly CLEAN_AFTER_BUILD="${CLEAN_AFTER_BUILD:-false}"
 
 readonly SCRIPT_DIR="$(dirname "$0")"
 readonly CONFIG_FILE="$SCRIPT_DIR/images.json"
@@ -61,7 +60,6 @@ function build_image() {
     run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
 
     "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
-    "$CLEAN_AFTER_BUILD" && run "docker image ls --filter \"since=$base_image:$tag\" --filter \"before=$image:$tag\" --quiet | xargs docker image rm --force \"$base_image:$tag\""
   done
 
   return 0

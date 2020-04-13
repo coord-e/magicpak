@@ -85,7 +85,6 @@ We provide some base images that contain `magicpak` and its optional dependencie
 | [magicpak/debian ![magicpak/debian](https://img.shields.io/docker/image-size/magicpak/debian?sort=date)](https://hub.docker.com/r/magicpak/debian) | [library/debian](http://hub.docker.com/_/debian) with `magicpak` |
 | [magicpak/cc ![magicpak/cc](https://img.shields.io/docker/image-size/magicpak/cc?sort=date)](https://hub.docker.com/r/magicpak/cc) | [library/debian](http://hub.docker.com/_/debian) with `build-essential`, `clang`, and `magicpak` |
 | [magicpak/haskell ![magicpak/haskell](https://img.shields.io/docker/image-size/magicpak/haskell?sort=date)](https://hub.docker.com/r/magicpak/haskell) | [library/haskell](http://hub.docker.com/_/haskell) with `magicpak` |
-| [magicpak/stack-build ![magicpak/stack-build](https://img.shields.io/docker/image-size/magicpak/stack-build?sort=date)](https://hub.docker.com/r/magicpak/stack-build) | [fpco/stack-build](http://hub.docker.com/r/fpco/stack-build) with `magicpak` |
 | [magicpak/rust ![magicpak/rust](https://img.shields.io/docker/image-size/magicpak/rust?sort=date)](https://hub.docker.com/r/magicpak/rust) | [library/rust](http://hub.docker.com/_/rust) with `magicpak` |
 
 ### Example
