@@ -89,29 +89,29 @@ We provide some base images that contain `magicpak` and its optional dependencie
 
 ### Example
 
-The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C-like languages. ([example/clang-format](/example/clang-format))
+The following is a dockerfile using `magicpak` for a docker image of [`brittany`](https://github.com/lspitzner/brittany), a formatter for Haskell. The resulting image size is just 15.6MB. ([example/brittany](/example/brittany))
 
 ```dockerfile
-FROM magicpak/debian
+FROM magicpak/haskell:8
 
-RUN apt-get -y update
-RUN apt-get -y --no-install-recommends install clang-format
+RUN cabal new-update
+RUN cabal new-install brittany
 
-RUN magicpak $(which clang-format) /bundle -v  \
-      --compress                               \
-      --upx-arg --best                         \
-      --upx-arg --brute                        \
-      --test                                   \
-      --test-stdin "int main(  ){ }"           \
-      --test-stdout "int main() {}"            \
+RUN magicpak $(which brittany) /bundle -v  \
+      --dynamic                            \
+      --dynamic-stdin "a = 1"              \
+      --compress                           \
+      --upx-arg -9                         \
+      --upx-arg --brute                    \
+      --test                               \
+      --test-stdin "a= 1"                  \
+      --test-stdout "a = 1"                \
       --install-to /bin/
 
 FROM scratch
 COPY --from=0 /bundle /.
 
-WORKDIR /workdir
-
-CMD ["/bin/clang-format"]
+CMD ["/bin/brittany"]
 ```
 
 ## Disclaimer
