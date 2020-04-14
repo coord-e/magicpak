@@ -32,6 +32,8 @@ That's it! The resulting image shall only contain what your executable requires 
 - **Flexible**. We expose a full control of resulting bundle with a family of options like `--include` and  `--exclude`. You can deal with dependencies that cannot be detected automatically.
 - **Stable**. We don't parse undocumented and sometimes inaccurate ldd(1) outputs. Instead, we use dlopen(3) and dlinfo(3) in glibc to query shared library locations to ld.so(8).
 
+`magicpak` is especially useful when you find it difficult to produce a statically linked executable. Also, `magicpak` is powerful when building from source is bothering or the source code is not public, because `magicpak` only requires the executable to build a minimal docker image.
+
 ## Usage
 
 You can start with `magicpak path/to/executable path/to/output`. This simply analyzes runtime dependencies of your executable statically and put everything your executable needs in runtime to the specified output directory. Once they've bundled, we can simply copy them to the `scratch` image in the second stage as follows.
