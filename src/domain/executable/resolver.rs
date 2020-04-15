@@ -162,12 +162,12 @@ where
     let source_path = source.into_temp_path();
 
     let output = Command::new(cc_path.as_ref())
+        .arg("-xc")
+        .arg(&source_path)
         .arg(format!("-Wl,-dynamic-linker,{}", interp.as_ref().display()))
         .arg("-ldl")
         .arg("-o")
         .arg(program_path.as_ref())
-        .arg("-xc")
-        .arg(&source_path)
         .output_with_log()?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr).to_string();
