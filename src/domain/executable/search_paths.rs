@@ -225,7 +225,7 @@ where
 #[cfg(target_env = "gnu")]
 const AT_PLATFORM: libc::c_ulong = libc::AT_PLATFORM;
 #[cfg(not(target_env = "gnu"))]
-const AT_PLATFORM: libc::c_ulong = 15;
+const AT_PLATFORM: libc::c_ulong = 15; // TODO: ad-hoc constant
 
 fn auxv_platform() -> Result<OsString> {
     let cstr = unsafe {
