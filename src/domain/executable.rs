@@ -162,7 +162,7 @@ impl Executable {
         // NOTE: We expect `fs::remove_file` to remove the file immediately, though the
         // documentation says 'there is no guarantee that the file is immediately deleted'.
         fs::remove_file(&result_path)?;
-        debug_assert!(!result_path.exists());
+        assert!(!result_path.exists());
         let output = Command::new(upx_path.as_ref())
             .args(upx_opts)
             .arg("--no-progress")
