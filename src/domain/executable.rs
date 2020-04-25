@@ -188,7 +188,7 @@ fn default_interpreter<P>(exe: P) -> Result<Option<PathBuf>>
 where
     P: AsRef<Path>,
 {
-    // from ldd(1); TODO: deal with hardcoded paths
+    // from the source code of ldd(1); TODO: deal with hardcoded paths
     let rtld_list = &[
         "/usr/lib/ld-linux.so.2",
         "/usr/lib64/ld-linux-x86-64.so.2",
