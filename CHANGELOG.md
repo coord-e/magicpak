@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2020-05-05
+
+- Fixed the order of `-ldl` option in resolver compilation. (#[1](https://github.com/coord-e/magicpak/pulls/1))
+
 ## [1.0.3] - 2020-04-14
 
 - Fixed `--test` behavior when the resulting bundle contains `/bin/`.
