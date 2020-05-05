@@ -32,6 +32,8 @@ That's it! The resulting image shall only contain what your executable requires 
 - **Flexible**. We expose a full control of resulting bundle with a family of options like `--include` and  `--exclude`. You can deal with dependencies that cannot be detected automatically.
 - **Stable**. We don't parse undocumented and sometimes inaccurate ldd(1) outputs. Instead, we use dlopen(3) and dlinfo(3) in glibc to query shared library locations to ld.so(8).
 
+`magicpak` is especially useful when you find it difficult to produce a statically linked executable. Also, `magicpak` is powerful when building from source is bothering or the source code is not public, because `magicpak` only requires the executable to build a minimal docker image.
+
 ## Usage
 
 You can start with `magicpak path/to/executable path/to/output`. This simply analyzes runtime dependencies of your executable statically and put everything your executable needs in runtime to the specified output directory. Once they've bundled, we can simply copy them to the `scratch` image in the second stage as follows.
@@ -82,36 +84,36 @@ We provide some base images that contain `magicpak` and its optional dependencie
 
 | name                                                         | description                                                  |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| [magicpak/debian ![magicpak/debian](https://img.shields.io/docker/image-size/magicpak/debian?sort=date)](https://hub.docker.com/r/magicpak/debian) | [library/debian](http://hub.docker.com/_/debian) with `magicpak` |
-| [magicpak/cc ![magicpak/cc](https://img.shields.io/docker/image-size/magicpak/cc?sort=date)](https://hub.docker.com/r/magicpak/cc) | [library/debian](http://hub.docker.com/_/debian) with `build-essential`, `clang`, and `magicpak` |
-| [magicpak/haskell ![magicpak/haskell](https://img.shields.io/docker/image-size/magicpak/haskell?sort=date)](https://hub.docker.com/r/magicpak/haskell) | [library/haskell](http://hub.docker.com/_/haskell) with `magicpak` |
-| [magicpak/rust ![magicpak/rust](https://img.shields.io/docker/image-size/magicpak/rust?sort=date)](https://hub.docker.com/r/magicpak/rust) | [library/rust](http://hub.docker.com/_/rust) with `magicpak` |
+| [magicpak/debian ![magicpak/debian](https://img.shields.io/docker/pulls/magicpak/debian)](https://hub.docker.com/r/magicpak/debian) | [library/debian](http://hub.docker.com/_/debian) with `magicpak` |
+| [magicpak/cc ![magicpak/cc](https://img.shields.io/docker/pulls/magicpak/cc)](https://hub.docker.com/r/magicpak/cc) | [library/debian](http://hub.docker.com/_/debian) with `build-essential`, `clang`, and `magicpak` |
+| [magicpak/haskell ![magicpak/haskell](https://img.shields.io/docker/pulls/magicpak/haskell)](https://hub.docker.com/r/magicpak/haskell) | [library/haskell](http://hub.docker.com/_/haskell) with `magicpak` |
+| [magicpak/rust ![magicpak/rust](https://img.shields.io/docker/pulls/magicpak/rust)](https://hub.docker.com/r/magicpak/rust) | [library/rust](http://hub.docker.com/_/rust) with `magicpak` |
 
 ### Example
 
-The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C-like languages. ([example/clang-format](/example/clang-format))
+The following is a dockerfile using `magicpak` for a docker image of [`brittany`](https://github.com/lspitzner/brittany), a formatter for Haskell. The resulting image size is just 15.6MB. ([example/brittany](/example/brittany))
 
 ```dockerfile
-FROM magicpak/debian
+FROM magicpak/haskell:8
 
-RUN apt-get -y update
-RUN apt-get -y --no-install-recommends install clang-format
+RUN cabal new-update
+RUN cabal new-install brittany
 
-RUN magicpak $(which clang-format) /bundle -v  \
-      --compress                               \
-      --upx-arg --best                         \
-      --upx-arg --brute                        \
-      --test                                   \
-      --test-stdin "int main(  ){ }"           \
-      --test-stdout "int main() {}"            \
+RUN magicpak $(which brittany) /bundle -v  \
+      --dynamic                            \
+      --dynamic-stdin "a = 1"              \
+      --compress                           \
+      --upx-arg -9                         \
+      --upx-arg --brute                    \
+      --test                               \
+      --test-stdin "a= 1"                  \
+      --test-stdout "a = 1"                \
       --install-to /bin/
 
 FROM scratch
 COPY --from=0 /bundle /.
 
-WORKDIR /workdir
-
-CMD ["/bin/clang-format"]
+CMD ["/bin/brittany"]
 ```
 
 ## Disclaimer

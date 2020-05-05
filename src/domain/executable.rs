@@ -162,7 +162,7 @@ impl Executable {
         // NOTE: We expect `fs::remove_file` to remove the file immediately, though the
         // documentation says 'there is no guarantee that the file is immediately deleted'.
         fs::remove_file(&result_path)?;
-        debug_assert!(!result_path.exists());
+        assert!(!result_path.exists());
         let output = Command::new(upx_path.as_ref())
             .args(upx_opts)
             .arg("--no-progress")
@@ -188,7 +188,7 @@ fn default_interpreter<P>(exe: P) -> Result<Option<PathBuf>>
 where
     P: AsRef<Path>,
 {
-    // from ldd(1); TODO: deal with hardcoded paths
+    // from the source code of ldd(1); TODO: deal with hardcoded paths
     let rtld_list = &[
         "/usr/lib/ld-linux.so.2",
         "/usr/lib64/ld-linux-x86-64.so.2",

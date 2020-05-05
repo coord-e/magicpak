@@ -187,9 +187,9 @@ where
     S: AsRef<OsStr>,
     T: AsRef<OsStr>,
 {
-    match *s {
-        [b'O', b'R', b'I', b'G', b'I', b'N'] => origin.as_ref().to_owned(),
-        [b'L', b'I', b'B'] => match is_64bit(&platform) {
+    match s {
+        b"ORIGIN" => origin.as_ref().to_owned(),
+        b"LIB" => match is_64bit(&platform) {
             Some(true) => OsStr::new("lib64").to_owned(),
             Some(false) => OsStr::new("lib").to_owned(),
             None => {
@@ -200,7 +200,7 @@ where
                 OsStr::new("lib").to_owned()
             }
         },
-        [b'P', b'L', b'A', b'T', b'F', b'O', b'R', b'M'] => platform.as_ref().to_owned(),
+        b"PLATFORM" => platform.as_ref().to_owned(),
         _ => {
             warn!(
                 "search_paths: unknown token string ${}",
@@ -225,7 +225,7 @@ where
 #[cfg(target_env = "gnu")]
 const AT_PLATFORM: libc::c_ulong = libc::AT_PLATFORM;
 #[cfg(not(target_env = "gnu"))]
-const AT_PLATFORM: libc::c_ulong = 15;
+const AT_PLATFORM: libc::c_ulong = 15; // TODO: ad-hoc constant
 
 fn auxv_platform() -> Result<OsString> {
     let cstr = unsafe {
