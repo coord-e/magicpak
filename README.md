@@ -1,7 +1,7 @@
 # magicpak
 
-[![Actions Status](https://github.com/coord-e/magicpak/workflows/Test%20and%20Lint/badge.svg)](https://github.com/coord-e/r53ddns/actions?workflow=Test+and+Lint)
-[![Actions Status](https://github.com/coord-e/magicpak/workflows/Release/badge.svg)](https://github.com/coord-e/r53ddns/actions?workflow=Release)
+[![Actions Status](https://github.com/coord-e/magicpak/workflows/Test%20and%20Lint/badge.svg)](https://github.com/coord-e/magicpak/actions?workflow=Test+and+Lint)
+[![Actions Status](https://github.com/coord-e/magicpak/workflows/Release/badge.svg)](https://github.com/coord-e/magicpak/actions?workflow=Release)
 [![License](https://img.shields.io/crates/l/mkbookpdf)](https://crates.io/crates/mkbookpdf)
 
 `magicpak` enables you to build minimal docker images without any bothersome preparation such as static linking.
