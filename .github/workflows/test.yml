@@ -41,3 +41,14 @@ jobs:
         with:
           command: clippy
           args: -- -D warnings
+  test_examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Build docker images
+        run: PUSH_IMAGES=false ./dockerfile/build.sh
+      - name: Build examples
+        run: |
+          for example in ./example/*; do
+            docker build "$example"
+          done
