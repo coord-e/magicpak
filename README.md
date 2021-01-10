@@ -91,32 +91,28 @@ We provide some base images that contain `magicpak` and its optional dependencie
 
 ### Example
 
-The following is a dockerfile using `magicpak` for a docker image of [`brittany`](https://github.com/lspitzner/brittany), a formatter for Haskell. The resulting image size is just 15.6MB. ([example/brittany](/example/brittany))
+The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C/C++/etc. ([example/clang-format](/example/clang-format))
 
 ```dockerfile
-FROM magicpak/haskell:8.10-magicpak1.1.0
+FROM magicpak/debian:buster-magicpak1.1.0
 
 RUN apt-get -y update
-RUN apt-get -y install unzip libtinfo5
+RUN apt-get -y --no-install-recommends install clang-format
 
-ADD https://github.com/lspitzner/brittany/releases/download/0.13.1.0/brittany-0.13.1.0-linux.zip /tmp/brittany.zip
-RUN cd /tmp && unzip ./brittany.zip
-
-RUN magicpak /tmp/brittany /bundle -v  \
-      --dynamic                        \
-      --dynamic-stdin "a = 1"          \
-      --compress                       \
-      --upx-arg -9                     \
-      --upx-arg --brute                \
-      --test                           \
-      --test-stdin "a= 1"              \
-      --test-stdout "a = 1"            \
+RUN magicpak $(which clang-format) /bundle -v  \
+      --compress                               \
+      --upx-arg --best                         \
+      --test                                   \
+      --test-stdin "int main(  ){ }"           \
+      --test-stdout "int main() {}"            \
       --install-to /bin/
 
 FROM scratch
 COPY --from=0 /bundle /.
 
-CMD ["/bin/brittany"]
+WORKDIR /workdir
+
+CMD ["/bin/clang-format"]
 ```
 
 ## Disclaimer
