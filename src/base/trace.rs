@@ -30,8 +30,8 @@ pub trait ChildTraceExt {
         handler: SyscallHandler<FOpen, FOpenAt>,
     ) -> Result<Output>
     where
-        FOpen: FnMut(OsString, i32) -> (),
-        FOpenAt: FnMut(i32, OsString, i32) -> ();
+        FOpen: FnMut(OsString, i32),
+        FOpenAt: FnMut(i32, OsString, i32);
 }
 
 impl ChildTraceExt for Child {
@@ -40,8 +40,8 @@ impl ChildTraceExt for Child {
         mut handler: SyscallHandler<FOpen, FOpenAt>,
     ) -> Result<Output>
     where
-        FOpen: FnMut(OsString, i32) -> (),
-        FOpenAt: FnMut(i32, OsString, i32) -> (),
+        FOpen: FnMut(OsString, i32),
+        FOpenAt: FnMut(i32, OsString, i32),
     {
         use nix::sys::signal::Signal;
         use nix::sys::wait::WaitStatus;

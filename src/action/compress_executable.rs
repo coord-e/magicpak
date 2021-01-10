@@ -1,5 +1,4 @@
 use std::ffi::OsStr;
-use std::mem;
 
 use crate::base::Result;
 use crate::domain::Executable;
@@ -21,6 +20,6 @@ where
         compressed.path().display()
     );
 
-    mem::replace(exe, compressed);
+    *exe = compressed;
     Ok(())
 }
