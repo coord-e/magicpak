@@ -9,7 +9,7 @@
 ```dockerfile
 # You prepare /bin/your_executable here...
 
-ADD https://github.com/coord-e/magicpak/releases/latest/download/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
+ADD https://github.com/coord-e/magicpak/releases/download/v1.1.0/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
 RUN chmod +x /usr/bin/magicpak
 
 RUN /usr/bin/magicpak -v /bin/your_executable /bundle
