@@ -30,8 +30,8 @@ pub trait ChildTraceExt {
         handler: SyscallHandler<FOpen, FOpenAt>,
     ) -> Result<Output>
     where
-        FOpen: FnMut(OsString, i32) -> (),
-        FOpenAt: FnMut(i32, OsString, i32) -> ();
+        FOpen: FnMut(OsString, i32),
+        FOpenAt: FnMut(i32, OsString, i32);
 }
 
 impl ChildTraceExt for Child {
@@ -40,8 +40,8 @@ impl ChildTraceExt for Child {
         mut handler: SyscallHandler<FOpen, FOpenAt>,
     ) -> Result<Output>
     where
-        FOpen: FnMut(OsString, i32) -> (),
-        FOpenAt: FnMut(i32, OsString, i32) -> (),
+        FOpen: FnMut(OsString, i32),
+        FOpenAt: FnMut(i32, OsString, i32),
     {
         use nix::sys::signal::Signal;
         use nix::sys::wait::WaitStatus;
@@ -123,25 +123,6 @@ fn output_of_child(child: &mut Child, status: ExitStatus) -> Result<Output> {
     Ok(output)
 }
 
-#[cfg(target_env = "musl")]
-fn getregs(pid: nix::unistd::Pid) -> Result<libc::user_regs_struct> {
-    use nix::sys::ptrace::Request;
-    use std::ffi::c_void;
-    use std::{mem, ptr};
-
-    let mut data = mem::MaybeUninit::uninit();
-    unsafe {
-        nix::sys::ptrace::ptrace(
-            Request::PTRACE_GETREGS,
-            pid,
-            ptr::null_mut(),
-            data.as_mut_ptr() as *mut c_void,
-        )?;
-        Ok(data.assume_init())
-    }
-}
-
-#[cfg(not(target_env = "musl"))]
 fn getregs(pid: nix::unistd::Pid) -> Result<libc::user_regs_struct> {
     nix::sys::ptrace::getregs(pid).map_err(Into::into)
 }

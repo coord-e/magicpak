@@ -1,46 +1,45 @@
 {
-  "magicpak/haskell": {
-    "base": "debian",
-    "image": "haskell",
-    "tags": ["latest", "8", "8.8", "8.4"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
-    }
-  },
-  "magicpak/rust": {
-    "base": "debian",
-    "image": "rust",
-    "tags": ["latest", "1", "1.42"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
-    }
-  },
-  "magicpak/cc": {
-    "base": "debian",
-    "image": "gcc",
-    "tags": ["latest", "9", "8"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": "build-essential clang"
-    }
-  },
-  "magicpak/debian": {
-    "base": "debian",
-    "image": "debian",
-    "tags": ["latest", "buster", "stretch"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
+  "version": "1.2.0",
+  "images": {
+    "haskell": {
+      "base": "debian",
+      "image": "haskell",
+      "tags": ["8", "8.10", "8.8", "8.6"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
+    },
+    "rust": {
+      "base": "debian",
+      "image": "rust",
+      "tags": ["1", "1.49"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
+    },
+    "cc": {
+      "base": "debian",
+      "image": "gcc",
+      "tags": ["10", "9", "8"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": "build-essential clang"
+      }
+    },
+    "debian": {
+      "base": "debian",
+      "image": "debian",
+      "tags": ["bullseye", "buster", "stretch"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
     }
   }
 }

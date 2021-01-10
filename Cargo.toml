@@ -1,6 +1,6 @@
 [package]
 name = "magicpak"
-version = "1.1.0"
+version = "1.2.0"
 authors = ["coord.e <me@coord-e.com>"]
 edition = "2018"
 license = "MIT OR Apache-2.0"
@@ -21,13 +21,13 @@ path = "src/magicpak.rs"
 
 [dependencies]
 goblin = "0.2"
-nix = "0.17.0"
+nix = "0.19.1"
 structopt = "0.3.11"
 tempfile = "3.1.0"
 glob = "0.3.0"
 log = "0.4"
 fern = "0.6.0"
-which = "3.1.1"
+which = "4.0"
 libc = "0.2.68"
 auxv = "0.3.3"
 

@@ -1,17 +1,19 @@
-FROM magicpak/haskell:8
+FROM magicpak/haskell:8.10-magicpak1.2.0
 
-RUN cabal new-update
-RUN cabal new-install brittany
+RUN apt-get -y update
+RUN apt-get -y install unzip libtinfo5
 
-RUN magicpak $(which brittany) /bundle -v  \
-      --dynamic                            \
-      --dynamic-stdin "a = 1"              \
-      --compress                           \
-      --upx-arg -9                         \
-      --upx-arg --brute                    \
-      --test                               \
-      --test-stdin "a= 1"                  \
-      --test-stdout "a = 1"                \
+ADD https://github.com/lspitzner/brittany/releases/download/0.13.1.0/brittany-0.13.1.0-linux.zip /tmp/brittany.zip
+RUN cd /tmp && unzip ./brittany.zip
+
+RUN magicpak /tmp/brittany /bundle -v  \
+      --dynamic                        \
+      --dynamic-stdin "a = 1"          \
+      --compress                       \
+      --upx-arg -9                     \
+      --test                           \
+      --test-stdin "a= 1"              \
+      --test-stdout "a = 1"            \
       --install-to /bin/
 
 FROM scratch

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
@@ -118,7 +119,11 @@ impl Executable {
         self.interpreter.as_ref()
     }
 
-    pub fn dynamic_libraries<P>(&self, cc_path: P) -> Result<Vec<PathBuf>>
+    fn dynamic_libraries_impl<P>(
+        &self,
+        resolving_libraries: &mut HashSet<String>,
+        cc_path: P,
+    ) -> Result<Vec<PathBuf>>
     where
         P: AsRef<Path>,
     {
@@ -136,17 +141,28 @@ impl Executable {
             let path = resolver.lookup(&lib)?;
             debug!("exe: found shared object {} => {}", lib, path.display());
 
-            // TODO: cache once traversed
-            // TODO: deal with semantic inconsistency (Executable on shared object)
-            let mut children =
-                Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
-                    .dynamic_libraries(cc_path.as_ref())?;
+            if !resolving_libraries.contains(lib) {
+                resolving_libraries.insert(lib.to_owned());
+                // TODO: cache once traversed
+                // TODO: deal with semantic inconsistency (Executable on shared object)
+                let mut children =
+                    Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
+                        .dynamic_libraries_impl(resolving_libraries, cc_path.as_ref())?;
 
-            paths.push(path);
-            paths.append(&mut children);
+                paths.push(path);
+                paths.append(&mut children);
+            }
         }
 
         Ok(paths)
+    }
+
+    pub fn dynamic_libraries<P>(&self, cc_path: P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path>,
+    {
+        let mut resolving_libraries = HashSet::new();
+        self.dynamic_libraries_impl(&mut resolving_libraries, cc_path)
     }
 
     pub fn compressed<P, T, I>(&self, upx_path: P, upx_opts: I) -> Result<Executable>

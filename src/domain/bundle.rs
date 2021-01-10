@@ -79,7 +79,7 @@ impl Bundle {
     {
         let entries = std::mem::take(&mut self.entries);
         let updated = entries.into_iter().filter(|(k, _)| predicate(k)).collect();
-        std::mem::replace(&mut self.entries, updated);
+        self.entries = updated;
     }
 
     pub fn emit<P>(&self, dest: P) -> Result<()>
