@@ -11,7 +11,6 @@ RUN magicpak /tmp/brittany /bundle -v  \
       --dynamic-stdin "a = 1"          \
       --compress                       \
       --upx-arg -9                     \
-      --upx-arg --brute                \
       --test                           \
       --test-stdin "a= 1"              \
       --test-stdout "a = 1"            \
