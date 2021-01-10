@@ -1,4 +1,4 @@
-FROM magicpak/haskell:8
+FROM magicpak/haskell:8-magicpak1.1.0
 
 RUN cabal new-update
 RUN cabal new-install brittany
