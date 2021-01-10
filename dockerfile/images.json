@@ -2,7 +2,7 @@
   "magicpak/haskell": {
     "base": "debian",
     "image": "haskell",
-    "tags": ["latest", "8", "8.8", "8.4"],
+    "tags": ["latest", "8", "8.10", "8.8", "8.6"],
     "args": {
       "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
       "UPX_VERSION": "3.96",
@@ -13,7 +13,7 @@
   "magicpak/rust": {
     "base": "debian",
     "image": "rust",
-    "tags": ["latest", "1", "1.42"],
+    "tags": ["latest", "1", "1.49"],
     "args": {
       "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
       "UPX_VERSION": "3.96",
@@ -24,7 +24,7 @@
   "magicpak/cc": {
     "base": "debian",
     "image": "gcc",
-    "tags": ["latest", "9", "8"],
+    "tags": ["latest", "10", "9", "8"],
     "args": {
       "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
       "UPX_VERSION": "3.96",
@@ -35,7 +35,7 @@
   "magicpak/debian": {
     "base": "debian",
     "image": "debian",
-    "tags": ["latest", "buster", "stretch"],
+    "tags": ["latest", "bullseye", "buster", "stretch"],
     "args": {
       "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
       "UPX_VERSION": "3.96",
