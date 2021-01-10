@@ -23,7 +23,7 @@ jobs:
           args: --release --all-features --target=${{ matrix.target }}
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
       - run: rustup component add rustfmt
@@ -33,7 +33,7 @@ jobs:
           args: --all -- --check
   clippy:
     name: Clippy
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v1
       - run: rustup component add clippy
@@ -42,7 +42,7 @@ jobs:
           command: clippy
           args: -- -D warnings
   test_examples:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
       - name: Build docker images
