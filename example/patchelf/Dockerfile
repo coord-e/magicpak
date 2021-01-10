@@ -1,4 +1,4 @@
-FROM magicpak/cc:10-magicpak1.1.0
+FROM magicpak/cc:10-magicpak1.2.0
 
 WORKDIR /usr/src/patchelf
 ADD https://github.com/NixOS/patchelf/archive/0.10.tar.gz patchelf.tar.gz
