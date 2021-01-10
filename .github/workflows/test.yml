@@ -45,8 +45,18 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@master
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: x86_64-unknown-linux-musl
+          default: true
+      - run: sudo apt-get install -y musl-tools
+      - uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --all-features --target=x86_64-unknown-linux-musl
       - name: Build docker images
-        run: PUSH_IMAGES=false ./dockerfile/build.sh
+        run: PUSH_IMAGES=false ./dockerfile/build.sh ./target/x86_64-unknown-linux-musl/release/magicpak
       - name: Build examples
         run: |
           for example in ./example/*; do

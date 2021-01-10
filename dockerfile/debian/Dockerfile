@@ -10,7 +10,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
 
 ARG BUSYBOX_VERSION
 ARG UPX_VERSION
-ARG MAGICPAK_VERSION
+ARG MAGICPAK_PATH
 
 ADD https://busybox.net/downloads/binaries/${BUSYBOX_VERSION}/busybox-x86_64 /bin/busybox
 RUN chmod +x /bin/busybox
@@ -21,5 +21,5 @@ RUN cd /tmp \
       && mv upx /bin/ \
       && rm upx.tar.xz
 
-ADD https://github.com/coord-e/magicpak/releases/download/v${MAGICPAK_VERSION}/magicpak-x86_64-unknown-linux-musl /bin/magicpak
+COPY ${MAGICPAK_PATH} /bin/magicpak
 RUN chmod +x /bin/magicpak

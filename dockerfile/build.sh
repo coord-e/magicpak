@@ -36,9 +36,7 @@ function run() {
 }
 
 function get_build_args() {
-  local -r version="$1"
-  local -r image="$2"
-  echo -n "--build-arg MAGICPAK_VERSION=\"$version\" "
+  local -r image="$1"
   for name in $(query_image "$image" ".args | keys[]"); do
     local value
     value=$(query_image "$image" ".args.$name")
@@ -47,20 +45,40 @@ function get_build_args() {
 }
 
 function build_image() {
-  local -r version="$1"
-  local -r image="$2"
+  local -r context_dir=$1
+  local -r bin_path=$2
+  local -r image=$3
+  local -r tag=$4
+  local -r base=$5
+
+  run "docker build \"$context_dir\"             \
+         --tag \"$image:$tag\"                   \
+         --build-arg BASE_IMAGE=\"$base\"        \
+         --build-arg MAGICPAK_PATH=\"$bin_path\" \
+         $(get_build_args "$image")"
+}
+
+function build_images() {
+  local -r path="$1"
+  local -r version="$2"
+  local -r image="$3"
 
   local base base_image
   base=$(query_image "$image" .base)
   base_image=$(query_image "$image" .image)
 
-  if [ ! -d "$SCRIPT_DIR/$base" ]; then
+  local -r context_dir="$SCRIPT_DIR/$base"
+  if [ ! -d "$context_dir" ]; then
     error "base '$base' not found"
     exit 1
   fi
 
+  local -r local_bin_path=.magicpak_tmp_bin
+  local -r bin_path="$context_dir/$local_bin_path"
+  cp "$path" "$bin_path"
+
   for tag in $(query_image "$image" .tags[]); do
-    run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag-magicpak$version\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$version" "$image")"
+    build_image "$context_dir" "$local_bin_path" "$image" "$tag-magicpak$version" "$base_image:$tag"
     run "docker tag \"$image:$tag-magicpak$version\" \"$image:$tag\""
 
     if $PUSH_IMAGES; then
@@ -69,7 +87,7 @@ function build_image() {
     fi
   done
 
-  run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:latest\" --build-arg BASE_IMAGE=$base_image:latest $(get_build_args "$version" "$image")"
+  build_image "$context_dir" "$local_bin_path" "$image" "latest" "$base_image:latest"
   run "docker tag \"$image:latest\" \"$image:magicpak$version\""
 
   if $PUSH_IMAGES; then
@@ -77,22 +95,25 @@ function build_image() {
     run "docker push \"$image:magicpak$version\""
   fi
 
+  rm -f "$bin_path"
+
   return 0
 }
 
 function main() {
+  if [ $# -ne 1 ]; then
+    info "usage: $0 [PATH_TO_MAGICPAK_EXECUTABLE]"
+    exit 1
+  fi
+
+  local -r magicpak_path=$1
+
   local version
   version=$(query .version)
 
-  if [ "$#" -eq 0 ]; then
-    for image in $(query '.images | keys[]'); do
-      build_image "$version" "$image"
-    done
-  else
-    for image in "$@"; do
-      build_image "$version" "$image"
-    done
-  fi
+  for image in $(query '.images | keys[]'); do
+    build_images "$magicpak_path" "$version" "$image"
+  done
 
   return 0
 }
