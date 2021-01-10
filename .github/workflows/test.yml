@@ -19,6 +19,15 @@ jobs:
       - run: sudo apt-get install -y musl-tools
       - uses: actions-rs/cargo@v1
         with:
+          command: build
+          args: --release --all-features --target=${{ matrix.target }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: musl-executable
+          path: ./target/x86_64-unknown-linux-musl/release/magicpak
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+      - uses: actions-rs/cargo@v1
+        with:
           command: test
           args: --release --all-features --target=${{ matrix.target }}
   fmt:
@@ -42,21 +51,16 @@ jobs:
           command: clippy
           args: -- -D warnings
   test_examples:
+    name: Test examples
     runs-on: ubuntu-18.04
+    needs: test
     steps:
       - uses: actions/checkout@master
-      - uses: actions-rs/toolchain@v1
+      - uses: actions/download-artifact@v2
         with:
-          toolchain: stable
-          target: x86_64-unknown-linux-musl
-          default: true
-      - run: sudo apt-get install -y musl-tools
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features --target=x86_64-unknown-linux-musl
+          name: musl-executable
       - name: Build docker images
-        run: IMAGE_PREFIX=test-magicpak/ PUSH_IMAGES=false ./dockerfile/build.sh ./target/x86_64-unknown-linux-musl/release/magicpak
+        run: IMAGE_PREFIX=test-magicpak/ PUSH_IMAGES=false ./dockerfile/build.sh ./magicpak
       - name: Build examples
         run: |
           for example in ./example/*; do
