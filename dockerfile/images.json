@@ -1,46 +1,45 @@
 {
-  "magicpak/haskell": {
-    "base": "debian",
-    "image": "haskell",
-    "tags": ["latest", "8", "8.10", "8.8", "8.6"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
-    }
-  },
-  "magicpak/rust": {
-    "base": "debian",
-    "image": "rust",
-    "tags": ["latest", "1", "1.49"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
-    }
-  },
-  "magicpak/cc": {
-    "base": "debian",
-    "image": "gcc",
-    "tags": ["latest", "10", "9", "8"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": "build-essential clang"
-    }
-  },
-  "magicpak/debian": {
-    "base": "debian",
-    "image": "debian",
-    "tags": ["latest", "bullseye", "buster", "stretch"],
-    "args": {
-      "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
-      "UPX_VERSION": "3.96",
-      "MAGICPAK_VERSION": "1.1.0",
-      "DEBIAN_PACKAGES": ""
+  "version": "1.1.0",
+  "images": {
+    "magicpak/haskell": {
+      "base": "debian",
+      "image": "haskell",
+      "tags": ["8", "8.10", "8.8", "8.6"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
+    },
+    "magicpak/rust": {
+      "base": "debian",
+      "image": "rust",
+      "tags": ["1", "1.49"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
+    },
+    "magicpak/cc": {
+      "base": "debian",
+      "image": "gcc",
+      "tags": ["10", "9", "8"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": "build-essential clang"
+      }
+    },
+    "magicpak/debian": {
+      "base": "debian",
+      "image": "debian",
+      "tags": ["bullseye", "buster", "stretch"],
+      "args": {
+        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
+        "UPX_VERSION": "3.96",
+        "DEBIAN_PACKAGES": ""
+      }
     }
   }
 }

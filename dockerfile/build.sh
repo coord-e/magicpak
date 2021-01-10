@@ -27,7 +27,7 @@ function query() {
 }
 
 function query_image() {
-  query ".\"$1\"$2"
+  query ".images.\"$1\"$2"
 }
 
 function run() {
@@ -36,7 +36,9 @@ function run() {
 }
 
 function get_build_args() {
-  local -r image="$1"
+  local -r version="$1"
+  local -r image="$2"
+  echo -n "--build-arg MAGICPAK_VERSION=\"$version\" "
   for name in $(query_image "$image" ".args | keys[]"); do
     local value
     value=$(query_image "$image" ".args.$name")
@@ -45,7 +47,8 @@ function get_build_args() {
 }
 
 function build_image() {
-  local -r image="$1"
+  local -r version="$1"
+  local -r image="$2"
 
   local base base_image
   base=$(query_image "$image" .base)
@@ -57,22 +60,37 @@ function build_image() {
   fi
 
   for tag in $(query_image "$image" .tags[]); do
-    run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$image")"
+    run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:$tag-magicpak$version\" --build-arg BASE_IMAGE=$base_image:$tag $(get_build_args "$version" "$image")"
+    run "docker tag \"$image:$tag-magicpak$version\" \"$image:$tag\""
 
-    "$PUSH_IMAGES" && run "docker push \"$image:$tag\""
+    if $PUSH_IMAGES; then
+      run "docker push \"$image:$tag-magicpak$version\""
+      run "docker push \"$image:$tag\""
+    fi
   done
+
+  run "docker build \"$SCRIPT_DIR/$base\" --tag \"$image:latest\" --build-arg BASE_IMAGE=$base_image:latest $(get_build_args "$version" "$image")"
+  run "docker tag \"$image:latest\" \"$image:magicpak$version\""
+
+  if $PUSH_IMAGES; then
+    run "docker push \"$image:latest\""
+    run "docker push \"$image:magicpak$version\""
+  fi
 
   return 0
 }
 
 function main() {
+  local version
+  version=$(query .version)
+
   if [ "$#" -eq 0 ]; then
-    for image in $(query keys[]); do
-      build_image "$image"
+    for image in $(query '.images | keys[]'); do
+      build_image "$version" "$image"
     done
   else
     for image in "$@"; do
-      build_image "$image"
+      build_image "$version" "$image"
     done
   fi
 
