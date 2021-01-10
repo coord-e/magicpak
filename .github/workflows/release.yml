@@ -9,7 +9,7 @@ jobs:
     name: Test
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: test
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: build_docker_images
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - name: Build examples
         run: |
           for example in ./example/*; do
@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: release
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions-rs/cargo@v1
         with:
           command: publish

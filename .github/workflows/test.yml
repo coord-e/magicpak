@@ -10,7 +10,7 @@ jobs:
       matrix:
         target: [x86_64-unknown-linux-musl]
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
@@ -34,7 +34,7 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
@@ -44,7 +44,7 @@ jobs:
     name: Clippy
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - run: rustup component add clippy
       - uses: actions-rs/cargo@v1
         with:
@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-18.04
     needs: test
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable
