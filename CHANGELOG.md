@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2021-01-11
+
+- Fixed infinite recursion caused by mutually dependent shared libraries. (#[3](https://github.com/coord-e/magicpak/pulls/3))
+- Fixed Clippy warnings. (#[4](https://github.com/coord-e/magicpak/pulls/4))
+- Updated dependencies.
+- Changed how magicpak images are tagged.
+
 ## [1.1.0] - 2020-05-05
 
 - Fixed the order of `-ldl` option in resolver compilation. (#[1](https://github.com/coord-e/magicpak/pulls/1))
