@@ -21,7 +21,7 @@ path = "src/magicpak.rs"
 
 [dependencies]
 goblin = "0.2"
-nix = "0.17.0"
+nix = "0.19.1"
 structopt = "0.3.11"
 tempfile = "3.1.0"
 glob = "0.3.0"
