@@ -46,10 +46,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: rustup component add clippy
-      - uses: actions-rs/cargo@v1
+      - uses: actions-rs/clippy-check@v1
         with:
-          command: clippy
-          args: -- -D warnings
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --all-features -- -D warnings
   test_examples:
     name: Test examples
     runs-on: ubuntu-18.04
