@@ -37,7 +37,7 @@ impl Jail {
             fs::create_dir(&bindir)?;
         }
         fs::copy(&busybox_path, &busybox_jail_path)?;
-        fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(755))?;
+        fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(0o755))?;
 
         let output = Command::new(busybox_jail_path)
             .arg("--install")
