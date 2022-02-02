@@ -138,7 +138,7 @@ impl Executable {
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
-            let path = resolver.lookup(&lib)?;
+            let path = resolver.lookup(lib)?;
             debug!("exe: found shared object {} => {}", lib, path.display());
 
             if !resolving_libraries.contains(lib) {
@@ -263,7 +263,7 @@ fn collect_paths(elf: &Elf<'_>, executable_path: &Path) -> Result<SearchPaths> {
             paths_str
                 .into_vec()
                 .split(|b| *b == b':' || *b == b';')
-                .map(|x| OsStr::from_bytes(x)),
+                .map(OsStr::from_bytes),
         );
     }
 

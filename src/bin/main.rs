@@ -124,15 +124,15 @@ fn run(opt: &Opt) -> Result<()> {
     action::bundle_executable(&mut bundle, &exe, &opt.input, opt.install_to.as_ref())?;
 
     for dir in &opt.mkdir {
-        action::make_directory(&mut bundle, &dir);
+        action::make_directory(&mut bundle, dir);
     }
 
     for glob in &opt.include {
-        action::include_glob(&mut bundle, &glob)?;
+        action::include_glob(&mut bundle, glob)?;
     }
 
     for glob in &opt.exclude {
-        action::exclude_glob(&mut bundle, &glob)?;
+        action::exclude_glob(&mut bundle, glob)?;
     }
 
     if opt.test {

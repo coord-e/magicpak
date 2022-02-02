@@ -133,7 +133,7 @@ fn read_string_at(pid: nix::unistd::Pid, mut addr: u64) -> Result<OsString> {
     let mut result = Vec::new();
     loop {
         let word = nix::sys::ptrace::read(pid, addr as *mut c_void)? as u32;
-        let bytes: [u8; 4] = unsafe { std::mem::transmute(word) };
+        let bytes: [u8; 4] = word.to_ne_bytes();
         for byte in bytes.iter() {
             if *byte == 0 {
                 return Ok(OsString::from_vec(result));
