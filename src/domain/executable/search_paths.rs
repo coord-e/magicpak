@@ -1,4 +1,4 @@
-use std::ffi::{CStr, OsStr, OsString};
+use std::ffi::{OsStr, OsString};
 use std::io;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
@@ -222,27 +222,24 @@ where
     }
 }
 
-#[cfg(target_env = "gnu")]
-const AT_PLATFORM: libc::c_ulong = libc::AT_PLATFORM;
-#[cfg(not(target_env = "gnu"))]
-const AT_PLATFORM: libc::c_ulong = 15; // TODO: ad-hoc constant
-
 fn auxv_platform() -> Result<OsString> {
-    let cstr = unsafe {
-        let val = auxv::stack::iterate_stack_auxv()
-            .find(|p| p.key == AT_PLATFORM)
-            .ok_or_else(|| {
-                Error::IO(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "could not find AT_PLATFORM auxval",
-                ))
-            })?
-            .value;
-        CStr::from_ptr(val as *const libc::c_char)
-    };
-    let platform = OsString::from_vec(cstr.to_bytes().to_vec());
-    debug!("search_paths: platform {}", platform.to_string_lossy());
-    Ok(platform)
+    let mut reader = crt0stack::Reader::from_environ().done();
+    let platform = reader
+        .find_map(|entry| {
+            if let crt0stack::Entry::Platform(platform) = entry {
+                Some(platform)
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| {
+            Error::IO(io::Error::new(
+                io::ErrorKind::NotFound,
+                "could not find AT_PLATFORM auxval",
+            ))
+        })?;
+    debug!("search_paths: platform {}", platform);
+    Ok(platform.into())
 }
 
 #[cfg(test)]

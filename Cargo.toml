@@ -19,7 +19,7 @@ name = "magicpak"
 path = "src/magicpak.rs"
 
 [dependencies]
-auxv = "0.3.3"
+crt0stack = "0.1"
 fern = "0.6.0"
 glob = "0.3.0"
 goblin = "0.2"
