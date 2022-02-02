@@ -2,7 +2,7 @@
 name = "magicpak"
 version = "1.2.0"
 authors = ["coord_e <me@coord-e.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT OR Apache-2.0"
 description = "Build minimal docker images without static linking"
 homepage = "https://github.com/coord-e/magicpak"
