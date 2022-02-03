@@ -4,7 +4,6 @@ use std::path::Path;
 use std::process::Command;
 use std::{env, fs};
 
-use crate::base::error;
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 
@@ -72,7 +71,7 @@ impl CommandJailExt for Command {
         unsafe {
             self.pre_exec(move || {
                 debug!("jail: chroot to {}", &jail_path.display());
-                nix::unistd::chroot(&jail_path).map_err(error::nix_to_io)?;
+                nix::unistd::chroot(&jail_path)?;
                 debug!("jail: chdir to /");
                 env::set_current_dir("/")
             })

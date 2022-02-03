@@ -4,7 +4,6 @@ use std::os::unix::ffi::OsStringExt;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Child, Command, ExitStatus, Output};
 
-use crate::base::error;
 use crate::base::{Error, Result};
 
 use log::warn;
@@ -16,7 +15,7 @@ pub trait CommandTraceExt {
 
 impl CommandTraceExt for Command {
     fn traceme(&mut self) -> &mut Command {
-        unsafe { self.pre_exec(|| nix::sys::ptrace::traceme().map_err(error::nix_to_io)) }
+        unsafe { self.pre_exec(|| nix::sys::ptrace::traceme().map_err(Into::into)) }
     }
 }
 
