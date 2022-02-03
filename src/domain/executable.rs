@@ -277,8 +277,8 @@ fn get_paths_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<Vec<PathBuf>> {
 }
 
 fn get_content_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<String> {
-    if let Some(x) = strtab.get(d.d_val as usize) {
-        Ok(x?.to_owned())
+    if let Some(x) = strtab.get_at(d.d_val as usize) {
+        Ok(x.to_owned())
     } else {
         Err(Error::ValueNotFoundInStrtab {
             tag: d.d_tag,
