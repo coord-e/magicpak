@@ -8,6 +8,7 @@ use crate::base::error;
 use crate::base::{Error, Result};
 
 use log::warn;
+use nix::libc;
 
 pub trait CommandTraceExt {
     fn traceme(&mut self) -> &mut Command;

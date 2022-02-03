@@ -574,7 +574,6 @@ dependencies = [
  "fern",
  "glob",
  "goblin",
- "libc",
  "log",
  "nix",
  "predicates",
