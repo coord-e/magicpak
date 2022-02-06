@@ -7,7 +7,6 @@ use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 use crate::domain::executable::SearchPaths;
 
-use log::debug;
 use tempfile::NamedTempFile;
 
 static RESOLVER_SOURCE_CODE: &str = r"
@@ -55,7 +54,7 @@ impl<'a> Resolver<'a> {
             search_paths,
         };
 
-        debug!("resolver: created resolver {:?}", resolver);
+        tracing::debug!(?resolver, "resolver: created resolver");
         Ok(resolver)
     }
 
@@ -63,26 +62,26 @@ impl<'a> Resolver<'a> {
     // TODO: take secure-execution mode into consideration
     pub fn lookup(&self, name: &str) -> Result<PathBuf> {
         if let Some(path) = self.lookup_rpath(name) {
-            debug!("resolver: {} => {} (by Rpath)", name, path.display());
+            tracing::debug!(%name, path = %path.display(), "resolver: found by Rpath");
             return Ok(path);
         }
 
         if let Some(path) = self.lookup_env(name) {
-            debug!(
-                "resolver: {} => {} (by LD_LIBRARY_PATH)",
-                name,
-                path.display()
+            tracing::debug!(
+                %name,
+                path = %path.display(),
+                "resolver: found by LD_LIBRARY_PATH",
             );
             return Ok(path);
         }
 
         if let Some(path) = self.lookup_runpath(name) {
-            debug!("resolver: {} => {} (by RunPath)", name, path.display());
+            tracing::debug!(%name, path = %path.display(), "resolver: found by RunPath");
             return Ok(path);
         }
 
         let path = self.lookup_rest(name)?;
-        debug!("resolver: {} => {} (by ld.so)", name, path.display());
+        tracing::debug!(%name, path = %path.display(), "resolver: found by ld.so");
 
         Ok(path)
     }

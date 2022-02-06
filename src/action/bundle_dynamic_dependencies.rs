@@ -11,8 +11,6 @@ use crate::base::trace::{ChildTraceExt, CommandTraceExt, SyscallHandler};
 use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
-use log::{debug, info};
-
 pub fn bundle_dynamic_dependencies<I, S, T>(
     bundle: &mut Bundle,
     exe: &Executable,
@@ -24,11 +22,11 @@ where
     S: AsRef<OsStr>,
     T: AsRef<str>,
 {
-    info!(
-        "action: bundle dynamically analyzed dependencies of {} with arguments {:?} and stdin {:?}",
-        exe.path().display(),
-        args,
-        stdin.as_ref().map(AsRef::as_ref)
+    tracing::info!(
+        exe = %exe.path().display(),
+        args = ?args,
+        stdin = ?stdin.as_ref().map(AsRef::as_ref),
+        "action: bundle dynamically analyzed dependencies",
     );
 
     let mut child = Command::new(exe.path())
@@ -62,16 +60,16 @@ where
 fn open_handler(bundle: &Rc<RefCell<&mut Bundle>>, name: &str, pathname: OsString) {
     let path: PathBuf = pathname.into();
 
-    debug!(
-        "action: bundle_dynamic_dependencies: syscall '{}' opens {}",
-        name,
-        path.display()
+    tracing::debug!(
+        syscall = %name,
+        open_path = %path.display(),
+        "action: bundle_dynamic_dependencies: open syscall",
     );
 
     if path.is_file() {
-        info!(
-            "action: bundle_dynamic_dependencies: found {}",
-            path.display()
+        tracing::info!(
+            path = %path.display(),
+            "action: bundle_dynamic_dependencies: found path",
         );
 
         bundle.borrow_mut().add(path);

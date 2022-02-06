@@ -5,8 +5,6 @@ use std::path::{Path, PathBuf};
 
 use crate::base::{Error, Result};
 
-use log::{debug, info, warn};
-
 #[derive(Hash, Default, Debug)]
 pub struct SearchPaths {
     rpath: Option<Vec<PathBuf>>,
@@ -157,9 +155,9 @@ where
 
     match state {
         ParseState::ScanningBraced => {
-            warn!(
-                "search_paths: unterminated braced token {}",
-                String::from_utf8_lossy(&buffer)
+            tracing::warn!(
+                token = ?String::from_utf8_lossy(&buffer),
+                "search_paths: unterminated braced token",
             );
             result.push(OsStr::from_bytes(&buffer));
         }
@@ -172,10 +170,10 @@ where
     }
 
     if input != result {
-        info!(
-            "search_paths: expand {} => {}",
-            input.to_string_lossy(),
-            result.to_string_lossy()
+        tracing::info!(
+            input = %input.to_string_lossy(),
+            result = %result.to_string_lossy(),
+            "search_paths: expand",
         );
     }
 
@@ -193,18 +191,18 @@ where
             Some(true) => OsStr::new("lib64").to_owned(),
             Some(false) => OsStr::new("lib").to_owned(),
             None => {
-                warn!(
-                    "search_paths: assuming \'{}\' is 32-bit platform",
-                    platform.as_ref().to_string_lossy()
+                tracing::warn!(
+                    platform = %platform.as_ref().to_string_lossy(),
+                    "search_paths: assuming 32-bit platform",
                 );
                 OsStr::new("lib").to_owned()
             }
         },
         b"PLATFORM" => platform.as_ref().to_owned(),
         _ => {
-            warn!(
-                "search_paths: unknown token string ${}",
-                String::from_utf8_lossy(s)
+            tracing::warn!(
+                token = %format!("${}", String::from_utf8_lossy(s)),
+                "search_paths: unknown dynamic string token",
             );
             OsString::from_vec([&[b'$'], s].concat().to_vec())
         }
@@ -238,7 +236,7 @@ fn auxv_platform() -> Result<OsString> {
                 "could not find AT_PLATFORM auxval",
             ))
         })?;
-    debug!("search_paths: platform {}", platform);
+    tracing::debug!(%platform, "search_paths: read platform from auxv");
     Ok(platform.into())
 }
 

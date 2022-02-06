@@ -7,7 +7,6 @@ use std::{env, fs};
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 
-use log::{debug, info};
 use tempfile::TempDir;
 
 pub struct Jail {
@@ -27,10 +26,10 @@ impl Jail {
         let bindir = self.dir.path().join("bin/");
         let busybox_jail_path = bindir.join("busybox");
 
-        info!(
-            "jail: copying busybox {} => {}",
-            busybox_path.as_ref().display(),
-            busybox_jail_path.display()
+        tracing::info!(
+            from_path = %busybox_path.as_ref().display(),
+            jail_path = %busybox_jail_path.display(),
+            "jail: copying busybox",
         );
         if !bindir.exists() {
             fs::create_dir(&bindir)?;
@@ -70,9 +69,9 @@ impl CommandJailExt for Command {
         let jail_path = jail.path().to_owned();
         unsafe {
             self.pre_exec(move || {
-                debug!("jail: chroot to {}", &jail_path.display());
+                tracing::debug!(path = %jail_path.display(), "jail: chroot");
                 nix::unistd::chroot(&jail_path)?;
-                debug!("jail: chdir to /");
+                tracing::debug!("jail: chdir to /");
                 env::set_current_dir("/")
             })
         }

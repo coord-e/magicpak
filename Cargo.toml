@@ -21,12 +21,12 @@ path = "src/magicpak.rs"
 [dependencies]
 clap = { version = "3", features = ["env", "derive"] }
 crt0stack = "0.1"
-fern = "0.6.0"
 glob = "0.3.0"
 goblin = "0.4"
-log = "0.4"
 nix = "0.23"
 tempfile = "3.1.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
 which = "4.0"
 
 [dev-dependencies]

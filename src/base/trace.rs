@@ -6,7 +6,6 @@ use std::process::{Child, Command, ExitStatus, Output};
 
 use crate::base::{Error, Result};
 
-use log::warn;
 use nix::libc;
 
 pub trait CommandTraceExt {
@@ -75,9 +74,9 @@ impl ChildTraceExt for Child {
                     return output_of_child(&mut self, status);
                 }
                 WaitStatus::Stopped(pid, sig) => {
-                    warn!(
-                        "trace_syscalls: stopped with {}, we attempt to continue",
-                        sig
+                    tracing::warn!(
+                        signal = %sig,
+                        "trace_syscalls: stopped by signal, we attempt to continue",
                     );
                     nix::sys::ptrace::syscall(pid, None)?;
                 }

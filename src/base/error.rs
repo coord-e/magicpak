@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitStatus;
 use std::{error, fmt, io, result, str};
 
-use ::goblin::error as goblin;
+use goblin::error as goblin;
 
 #[derive(Debug)]
 pub enum Error {

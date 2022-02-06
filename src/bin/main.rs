@@ -5,7 +5,6 @@ use magicpak::base::Result;
 use magicpak::domain::{Bundle, Executable};
 
 use clap::Parser;
-use log::error;
 
 #[derive(Parser)]
 #[clap(name = "magicpak")]
@@ -36,7 +35,7 @@ struct Args {
 
     #[clap(long, value_name = "LEVEL", default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
     /// Specify the log level
-    log_level: log::LevelFilter,
+    log_level: tracing_subscriber::filter::LevelFilter,
 
     #[clap(short, long)]
     /// Verbose mode, same as --log-level Info
@@ -154,23 +153,27 @@ fn run(args: &Args) -> Result<()> {
 fn main() {
     let args = Args::parse();
 
-    let log_level = if args.verbose {
-        log::LevelFilter::Info
+    let level_filter = if args.verbose {
+        tracing_subscriber::filter::LevelFilter::INFO
     } else {
         args.log_level
     };
 
-    fern::Dispatch::new()
-        .format(|out, message, record| out.finish(format_args!("[{}] {}", record.level(), message)))
-        .level(log_level)
-        .chain(std::io::stderr())
-        .apply()
-        .unwrap();
+    use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
+    tracing_subscriber::registry()
+        .with(level_filter)
+        .with(
+            tracing_subscriber::fmt::layer()
+                .with_writer(std::io::stderr)
+                .with_target(false)
+                .without_time(),
+        )
+        .init();
 
     std::process::exit(match run(&args) {
         Ok(()) => 0,
         Err(e) => {
-            error!("error: {}", e);
+            eprintln!("error: {}", e);
             1
         }
     });
