@@ -7,7 +7,7 @@ name: Release
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - run: sudo apt-get install -y musl-tools
@@ -25,7 +25,7 @@ jobs:
           path: ./target/x86_64-unknown-linux-musl/release/magicpak
   build_docker_images:
     name: Build and push docker images
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: test
     steps:
       - uses: actions/checkout@v2
@@ -36,7 +36,7 @@ jobs:
       - run: PUSH_IMAGES=true ./dockerfile/build.sh ./magicpak
   test_examples:
     name: Test examples
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: build_docker_images
     steps:
       - uses: actions/checkout@v2
@@ -47,7 +47,7 @@ jobs:
           done
   release:
     name: Release
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: test_examples
     steps:
       - uses: actions/download-artifact@v2
@@ -61,7 +61,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   upload:
     name: Upload to crates.io
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: release
     steps:
       - uses: actions/checkout@v2
