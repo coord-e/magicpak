@@ -1,8 +1,6 @@
 use std::io::Result;
 use std::process::{Child, Command, ExitStatus, Output};
 
-use log::debug;
-
 pub trait CommandLogExt {
     fn spawn_with_log(&mut self) -> Result<Child>;
 
@@ -19,7 +17,7 @@ pub trait ChildLogExt {
 
 impl CommandLogExt for Command {
     fn spawn_with_log(&mut self) -> Result<Child> {
-        debug!("spawn: {:?}", self);
+        tracing::debug!(command = ?self, "spawn");
         self.spawn()
     }
 
@@ -53,7 +51,7 @@ pub fn log_output(command_line: &str, output: &Output) {
         message.push_str(&stderr);
     }
 
-    debug!("{}", message);
+    tracing::debug!("{}", message);
 }
 
 fn format_lines<S>(s: S) -> String

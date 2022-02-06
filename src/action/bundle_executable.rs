@@ -3,8 +3,6 @@ use std::path::Path;
 use crate::base::Result;
 use crate::domain::{Bundle, BundlePath, Executable};
 
-use log::info;
-
 pub fn bundle_executable<S, P>(
     bundle: &mut Bundle,
     exe: &Executable,
@@ -15,10 +13,10 @@ where
     S: AsRef<str>,
     P: AsRef<Path>,
 {
-    info!(
-        "action: bundle executable {} as {:?}",
-        exe.path().display(),
-        install_path.as_ref().map(|x| x.as_ref())
+    tracing::info!(
+        exe = %exe.path().display(),
+        install_path = ?install_path.as_ref().map(|x| x.as_ref()),
+        "action: bundle executable",
     );
 
     match install_path {
@@ -27,9 +25,9 @@ where
 
             if path.ends_with('/') {
                 path.push_str(exe.name());
-                info!(
-                    "action: bundle_executable: completing full path to {}",
-                    path
+                tracing::info!(
+                    completed_path = %path,
+                    "action: bundle_executable: completing full path",
                 );
             }
             bundle.add_file_from(BundlePath::projection(&path), exe.path());

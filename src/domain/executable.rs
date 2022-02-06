@@ -11,7 +11,6 @@ use crate::base::{Error, Result};
 use goblin::elf::dynamic::{Dyn, DT_RPATH, DT_RUNPATH};
 use goblin::elf::Elf;
 use goblin::strtab::Strtab;
-use log::{debug, info, warn};
 use tempfile::{NamedTempFile, TempPath};
 
 mod resolver;
@@ -48,7 +47,7 @@ impl Executable {
         name: String,
         propagated_rpaths: Option<Vec<PathBuf>>,
     ) -> Result<Self> {
-        info!("exe: loading {}", location.as_ref().display());
+        tracing::info!(location = %location.as_ref().display(), "exe: loading");
         let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
         let interpreter = if let Some(interp) = elf.interpreter {
@@ -56,9 +55,11 @@ impl Executable {
         } else {
             let interp = default_interpreter(&location)?;
             if let Some(interp) = &interp {
-                info!("exe: using default interpreter {}", interp.display());
+                tracing::info!(interp = %interp.display(), "exe: using default interpreter");
             } else {
-                warn!("exe: interpreter could not be found. static or compressed executable?");
+                tracing::warn!(
+                    "exe: interpreter could not be found. static or compressed executable?"
+                );
             }
             interp
         };
@@ -77,7 +78,7 @@ impl Executable {
             search_paths,
         };
 
-        debug!("exe: loaded {:?}", exe);
+        tracing::debug!(exe = ?exe, "exe: loaded");
         Ok(exe)
     }
 
@@ -130,7 +131,9 @@ impl Executable {
         let interpreter = if let Some(interp) = &self.interpreter {
             interp
         } else {
-            warn!("exe: requesting dynamic libraries of the executable without the interpreter");
+            tracing::warn!(
+                "exe: requesting dynamic libraries of the executable without the interpreter"
+            );
             return Ok(Vec::new());
         };
 
@@ -138,8 +141,12 @@ impl Executable {
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
-            let path = resolver.lookup(&lib)?;
-            debug!("exe: found shared object {} => {}", lib, path.display());
+            let path = resolver.lookup(lib)?;
+            tracing::debug!(
+                name = %lib,
+                path = %path.display(),
+                "exe: found shared object",
+            );
 
             if !resolving_libraries.contains(lib) {
                 resolving_libraries.insert(lib.to_owned());
@@ -254,16 +261,16 @@ fn collect_paths(elf: &Elf<'_>, executable_path: &Path) -> Result<SearchPaths> {
     }
 
     if let Some(paths_str) = env::var_os("LD_LIBRARY_PATH") {
-        debug!(
-            "executable: LD_LIBRARY_PATH={}",
-            paths_str.to_string_lossy()
+        tracing::debug!(
+            value = %paths_str.to_string_lossy(),
+            "executable: got LD_LIBRARY_PATH",
         );
 
         paths.append_ld_library_path(
             paths_str
                 .into_vec()
                 .split(|b| *b == b':' || *b == b';')
-                .map(|x| OsStr::from_bytes(x)),
+                .map(OsStr::from_bytes),
         );
     }
 
@@ -277,8 +284,8 @@ fn get_paths_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<Vec<PathBuf>> {
 }
 
 fn get_content_in_strtab(d: &Dyn, strtab: &Strtab<'_>) -> Result<String> {
-    if let Some(x) = strtab.get(d.d_val as usize) {
-        Ok(x?.to_owned())
+    if let Some(x) = strtab.get_at(d.d_val as usize) {
+        Ok(x.to_owned())
     } else {
         Err(Error::ValueNotFoundInStrtab {
             tag: d.d_tag,

@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitStatus;
 use std::{error, fmt, io, result, str};
 
-use ::goblin::error as goblin;
+use goblin::error as goblin;
 
 #[derive(Debug)]
 pub enum Error {
@@ -121,22 +121,12 @@ impl From<glob::PatternError> for Error {
 
 impl From<nix::Error> for Error {
     fn from(err: nix::Error) -> Self {
-        Error::IO(nix_to_io(err))
+        Error::IO(err.into())
     }
 }
 
 impl From<which::Error> for Error {
     fn from(err: which::Error) -> Self {
         Error::ExecutableLocateFailed(err)
-    }
-}
-
-pub fn nix_to_io(nix: nix::Error) -> io::Error {
-    match nix {
-        nix::Error::Sys(errno) => errno.into(),
-        nix::Error::InvalidPath | nix::Error::InvalidUtf8 => {
-            io::Error::new(io::ErrorKind::InvalidData, nix)
-        }
-        nix::Error::UnsupportedOperation => io::Error::new(io::ErrorKind::InvalidInput, nix),
     }
 }

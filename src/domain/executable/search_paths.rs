@@ -1,11 +1,9 @@
-use std::ffi::{CStr, OsStr, OsString};
+use std::ffi::{OsStr, OsString};
 use std::io;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 
 use crate::base::{Error, Result};
-
-use log::{debug, info, warn};
 
 #[derive(Hash, Default, Debug)]
 pub struct SearchPaths {
@@ -157,9 +155,9 @@ where
 
     match state {
         ParseState::ScanningBraced => {
-            warn!(
-                "search_paths: unterminated braced token {}",
-                String::from_utf8_lossy(&buffer)
+            tracing::warn!(
+                token = ?String::from_utf8_lossy(&buffer),
+                "search_paths: unterminated braced token",
             );
             result.push(OsStr::from_bytes(&buffer));
         }
@@ -172,10 +170,10 @@ where
     }
 
     if input != result {
-        info!(
-            "search_paths: expand {} => {}",
-            input.to_string_lossy(),
-            result.to_string_lossy()
+        tracing::info!(
+            input = %input.to_string_lossy(),
+            result = %result.to_string_lossy(),
+            "search_paths: expand",
         );
     }
 
@@ -193,18 +191,18 @@ where
             Some(true) => OsStr::new("lib64").to_owned(),
             Some(false) => OsStr::new("lib").to_owned(),
             None => {
-                warn!(
-                    "search_paths: assuming \'{}\' is 32-bit platform",
-                    platform.as_ref().to_string_lossy()
+                tracing::warn!(
+                    platform = %platform.as_ref().to_string_lossy(),
+                    "search_paths: assuming 32-bit platform",
                 );
                 OsStr::new("lib").to_owned()
             }
         },
         b"PLATFORM" => platform.as_ref().to_owned(),
         _ => {
-            warn!(
-                "search_paths: unknown token string ${}",
-                String::from_utf8_lossy(s)
+            tracing::warn!(
+                token = %format!("${}", String::from_utf8_lossy(s)),
+                "search_paths: unknown dynamic string token",
             );
             OsString::from_vec([&[b'$'], s].concat().to_vec())
         }
@@ -222,27 +220,24 @@ where
     }
 }
 
-#[cfg(target_env = "gnu")]
-const AT_PLATFORM: libc::c_ulong = libc::AT_PLATFORM;
-#[cfg(not(target_env = "gnu"))]
-const AT_PLATFORM: libc::c_ulong = 15; // TODO: ad-hoc constant
-
 fn auxv_platform() -> Result<OsString> {
-    let cstr = unsafe {
-        let val = auxv::stack::iterate_stack_auxv()
-            .find(|p| p.key == AT_PLATFORM)
-            .ok_or_else(|| {
-                Error::IO(io::Error::new(
-                    io::ErrorKind::NotFound,
-                    "could not find AT_PLATFORM auxval",
-                ))
-            })?
-            .value;
-        CStr::from_ptr(val as *const libc::c_char)
-    };
-    let platform = OsString::from_vec(cstr.to_bytes().to_vec());
-    debug!("search_paths: platform {}", platform.to_string_lossy());
-    Ok(platform)
+    let mut reader = crt0stack::Reader::from_environ().done();
+    let platform = reader
+        .find_map(|entry| {
+            if let crt0stack::Entry::Platform(platform) = entry {
+                Some(platform)
+            } else {
+                None
+            }
+        })
+        .ok_or_else(|| {
+            Error::IO(io::Error::new(
+                io::ErrorKind::NotFound,
+                "could not find AT_PLATFORM auxval",
+            ))
+        })?;
+    tracing::debug!(%platform, "search_paths: read platform from auxv");
+    Ok(platform.into())
 }
 
 #[cfg(test)]

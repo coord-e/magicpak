@@ -6,8 +6,6 @@ use crate::base::{Error, Result};
 use crate::domain::jail::CommandJailExt;
 use crate::domain::{Bundle, Executable};
 
-use log::info;
-
 pub fn test<S, T, U>(
     bundle: &Bundle,
     exe: &Executable,
@@ -26,7 +24,7 @@ where
         .map(AsRef::as_ref)
         .unwrap_or_else(|| exe.name());
 
-    info!("action: test the bundle with command '{}'", command);
+    tracing::info!(%command, "action: test the bundle");
 
     let busybox_path = which::which(busybox)?;
 
@@ -55,7 +53,7 @@ where
     if !output.status.success() {
         return Err(Error::TestFailed(command.to_owned()));
     }
-    info!("action: test command succeeded with {}", output.status);
+    tracing::info!(status = %output.status, "action: test command succeeded");
 
     if let Some(content) = command_stdout {
         let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
@@ -67,6 +65,6 @@ where
         }
     }
 
-    info!("action: test succeeded");
+    tracing::info!("action: test succeeded");
     Ok(())
 }

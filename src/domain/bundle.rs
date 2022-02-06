@@ -6,8 +6,6 @@ use std::path::{Path, PathBuf};
 use crate::base::Result;
 use crate::domain::{BundlePath, BundlePathBuf, Executable, Jail, Resource};
 
-use log::{debug, info, warn};
-
 #[derive(Clone)]
 enum Source {
     NewDirectory,
@@ -31,7 +29,7 @@ impl Bundle {
     where
         P: AsRef<BundlePath>,
     {
-        debug!("bundle: mkdir {}", path.as_ref().display());
+        tracing::debug!(path = %path.as_ref().display(), "bundle: mkdir");
         self.entries
             .insert(path.as_ref().to_owned(), Source::NewDirectory);
     }
@@ -40,9 +38,9 @@ impl Bundle {
     where
         P: AsRef<BundlePath>,
     {
-        debug!(
-            "bundle: add_file {} (content omitted)",
-            path.as_ref().display()
+        tracing::debug!(
+            path = %path.as_ref().display(),
+            "bundle: add_file",
         );
         self.entries
             .insert(path.as_ref().to_owned(), Source::NewFile(content));
@@ -54,10 +52,10 @@ impl Bundle {
         Q: AsRef<Path>,
     {
         debug_assert!(from.as_ref().is_absolute());
-        debug!(
-            "bundle: copy from: {} to: {}",
-            from.as_ref().display(),
-            path.as_ref().display()
+        tracing::debug!(
+            from = %from.as_ref().display(),
+            path = %path.as_ref().display(),
+            "bundle: copy",
         );
 
         self.entries.insert(
@@ -90,12 +88,12 @@ impl Bundle {
             match source {
                 Source::NewDirectory => {
                     let path = bpath.reify(&dest);
-                    info!("emit: mkdir {}", path.display());
+                    tracing::info!(path = %path.display(), "emit: mkdir");
                     fs::create_dir_all(path)?
                 }
                 Source::NewFile(blob) => {
                     let path = bpath.reify(&dest);
-                    info!("emit: write {} (content omitted)", path.display());
+                    tracing::info!(path = %path.display(), "emit: write");
                     create_parent_dir(&path)?;
                     fs::write(path, blob)?
                 }
@@ -114,7 +112,7 @@ impl Bundle {
 
     pub fn create_jail(&self) -> Result<Jail> {
         let jail = Jail::new()?;
-        debug!("bundle: created jail {}", jail.path().display());
+        tracing::debug!(path = %jail.path().display(), "bundle: created jail");
 
         self.emit(&jail)?;
         Ok(jail)
@@ -144,9 +142,9 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
     create_parent_dir(&target)?;
 
     if !from.exists() {
-        warn!(
-            "emit: copy source {} does not exist. skipping.",
-            from.display()
+        tracing::warn!(
+            path = %from.display(),
+            "emit: copy source does not exist. skipping.",
         );
         return Ok(());
     }
@@ -159,10 +157,10 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
         } else {
             link_dest
         };
-        info!(
-            "emit: link {} => {}",
-            link_dest_absolute.display(),
-            target.display()
+        tracing::info!(
+            link = %link_dest_absolute.display(),
+            target = %target.display(),
+            "emit: link",
         );
         unix::fs::symlink(&link_dest_absolute, target)?;
         sync_copy(
@@ -171,7 +169,7 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
             dest,
         )
     } else {
-        info!("emit: copy {} => {}", from.display(), target.display());
+        tracing::info!(from = %from.display(), target = %target.display(), "emit: copy");
         fs::copy(from, target)?;
         Ok(())
     }
