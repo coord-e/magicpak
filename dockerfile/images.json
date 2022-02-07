@@ -4,7 +4,7 @@
     "haskell": {
       "base": "debian",
       "image": "haskell",
-      "tags": ["8", "8.10", "8.8", "8.6"],
+      "tags": ["8", "8.10", "8.10.2", "8.8", "8.6"],
       "args": {
         "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
         "UPX_VERSION": "3.96",
