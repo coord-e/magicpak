@@ -45,7 +45,7 @@ jobs:
       - run: ./dockerfile/build.sh ./magicpak
         env:
           PUSH_IMAGES: true
-          DOCKER_BUILD: "docker buildx build --cache-from type=gha --cache-to type=gha,mode=max"
+          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
   release:
     name: Release
     runs-on: ubuntu-20.04

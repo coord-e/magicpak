@@ -65,7 +65,7 @@ jobs:
         env:
           IMAGE_PREFIX: test-magicpak/
           PUSH_IMAGES: false
-          DOCKER_BUILD: "docker buildx build --cache-from type=gha --cache-to type=gha,mode=max"
+          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
         run: |
           for example in ./example/*; do
             sed -e 's/FROM magicpak/FROM test-magicpak/' -i "$example/Dockerfile"
