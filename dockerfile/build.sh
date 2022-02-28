@@ -4,6 +4,7 @@ set -euo pipefail
 
 readonly PUSH_IMAGES="${PUSH_IMAGES:-false}"
 readonly IMAGE_PREFIX="${IMAGE_PREFIX:-magicpak/}"
+readonly IMAGE_FILTER="${IMAGE_FILTER:-*}"
 
 readonly SCRIPT_DIR="$(dirname "$0")"
 readonly CONFIG_FILE="$SCRIPT_DIR/images.json"
@@ -52,11 +53,44 @@ function build_image() {
   local -r tag=$4
   local -r base=$5
 
+  local -r built_image=$IMAGE_PREFIX$image_name:$tag
+  # shellcheck disable=SC2053
+  if [[ "$built_image" != $IMAGE_FILTER ]]; then
+    return
+  fi
+
   run "docker build \"$context_dir\"             \
-         --tag \"$IMAGE_PREFIX$image_name:$tag\" \
+         --tag \"$built_image\"                  \
          --build-arg BASE_IMAGE=\"$base\"        \
          --build-arg MAGICPAK_PATH=\"$bin_path\" \
          $(get_build_args "$image_name")"
+}
+
+function tag_image() {
+  local -r from=$1
+  local -r to=$2
+
+  # shellcheck disable=SC2053
+  if [[ "$to" != $IMAGE_FILTER ]]; then
+    return
+  fi
+
+  run "docker tag \"$from\" \"$to\""
+}
+
+function push_image() {
+  local -r image=$1
+
+  if ! $PUSH_IMAGES; then
+    return
+  fi
+
+  # shellcheck disable=SC2053
+  if [[ "$image" != $IMAGE_FILTER ]]; then
+    return
+  fi
+
+  run "docker push \"$image\""
 }
 
 function build_images() {
@@ -82,20 +116,20 @@ function build_images() {
 
   for tag in $(query_image "$image_name" .tags[]); do
     build_image "$context_dir" "$local_bin_path" "$image_name" "$tag-magicpak$version" "$base_image:$tag"
-    run "docker tag \"$image:$tag-magicpak$version\" \"$image:$tag\""
+    tag_image "$image:$tag-magicpak$version" "$image:$tag"
 
     if $PUSH_IMAGES; then
-      run "docker push \"$image:$tag-magicpak$version\""
-      run "docker push \"$image:$tag\""
+      push_image "$image:$tag-magicpak$version"
+      push_image "$image:$tag"
     fi
   done
 
   build_image "$context_dir" "$local_bin_path" "$image_name" "latest" "$base_image:latest"
-  run "docker tag \"$image:latest\" \"$image:magicpak$version\""
+  tag_image "$image:latest" "$image:magicpak$version"
 
   if $PUSH_IMAGES; then
-    run "docker push \"$image:latest\""
-    run "docker push \"$image:magicpak$version\""
+    push_image "$image:latest"
+    push_image "$image:magicpak$version"
   fi
 
   rm -f "$bin_path"

@@ -61,11 +61,15 @@ jobs:
         with:
           name: musl-executable
       - name: Build docker images
-        run: IMAGE_PREFIX=test-magicpak/ PUSH_IMAGES=false ./dockerfile/build.sh ./magicpak
-      - name: Build examples
+        env:
+          IMAGE_PREFIX: test-magicpak/
+          PUSH_IMAGES: false
         run: |
           for example in ./example/*; do
             sed -e 's/FROM magicpak/FROM test-magicpak/' -i "$example/Dockerfile"
             grep 'FROM magicpak' "$example/Dockerfile" && exit 1 || true
-            docker build "$example"
+            IMAGE=$(head -1 "$example/Dockerfile" | sed -e 's/FROM \(.*\)/\1/')
+            IMAGE_FILTER=$IMAGE ./dockerfile/build.sh ./magicpak
           done
+      - name: Build examples
+        run: for example in ./example/*; do docker build "$example"; done
