@@ -46,21 +46,10 @@ jobs:
         env:
           PUSH_IMAGES: true
           DOCKER_BUILD: "docker buildx build --cache-from type=gha --cache-to type=gha,mode=max"
-  test_examples:
-    name: Test examples
-    runs-on: ubuntu-20.04
-    needs: build_docker_images
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build examples
-        run: |
-          for example in ./example/*; do
-            docker build "$example"
-          done
   release:
     name: Release
     runs-on: ubuntu-20.04
-    needs: test_examples
+    needs: build_docker_images
     steps:
       - uses: actions/download-artifact@v2
         with:
