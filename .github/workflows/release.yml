@@ -41,7 +41,11 @@ jobs:
         with:
           name: musl-executable
       - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-      - run: PUSH_IMAGES=true ./dockerfile/build.sh ./magicpak
+      - uses: docker/setup-buildx-action@v1
+      - run: ./dockerfile/build.sh ./magicpak
+        env:
+          PUSH_IMAGES: true
+          DOCKER_BUILD: "docker buildx build --cache-from type=gha --cache-to type=gha,mode=max"
   test_examples:
     name: Test examples
     runs-on: ubuntu-20.04

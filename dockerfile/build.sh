@@ -2,6 +2,7 @@
 
 set -euo pipefail
 
+readonly DOCKER_BUILD="${DOCKER_BUILD:-docker build}"
 readonly PUSH_IMAGES="${PUSH_IMAGES:-false}"
 readonly IMAGE_PREFIX="${IMAGE_PREFIX:-magicpak/}"
 readonly IMAGE_FILTER="${IMAGE_FILTER:-*}"
@@ -59,7 +60,7 @@ function build_image() {
     return
   fi
 
-  run "docker build \"$context_dir\"             \
+  run "$DOCKER_BUILD \"$context_dir\"            \
          --tag \"$built_image\"                  \
          --build-arg BASE_IMAGE=\"$base\"        \
          --build-arg MAGICPAK_PATH=\"$bin_path\" \

@@ -60,10 +60,12 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable
+      - uses: docker/setup-buildx-action@v1
       - name: Build docker images
         env:
           IMAGE_PREFIX: test-magicpak/
           PUSH_IMAGES: false
+          DOCKER_BUILD: "docker buildx build --cache-from type=gha --cache-to type=gha,mode=max"
         run: |
           for example in ./example/*; do
             sed -e 's/FROM magicpak/FROM test-magicpak/' -i "$example/Dockerfile"
