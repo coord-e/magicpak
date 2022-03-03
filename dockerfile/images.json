@@ -6,7 +6,6 @@
       "image": "haskell",
       "tags": ["8", "8.10", "8.10.2", "8.8", "8.6"],
       "args": {
-        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
         "UPX_VERSION": "3.96",
         "DEBIAN_PACKAGES": ""
       }
@@ -16,7 +15,6 @@
       "image": "rust",
       "tags": ["1", "1.49"],
       "args": {
-        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
         "UPX_VERSION": "3.96",
         "DEBIAN_PACKAGES": ""
       }
@@ -26,7 +24,6 @@
       "image": "gcc",
       "tags": ["10", "9", "8"],
       "args": {
-        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
         "UPX_VERSION": "3.96",
         "DEBIAN_PACKAGES": "build-essential clang"
       }
@@ -36,7 +33,6 @@
       "image": "debian",
       "tags": ["bullseye", "buster", "stretch"],
       "args": {
-        "BUSYBOX_VERSION": "1.31.0-defconfig-multiarch-musl",
         "UPX_VERSION": "3.96",
         "DEBIAN_PACKAGES": ""
       }
