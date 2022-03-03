@@ -11,7 +11,15 @@ jobs:
         target: [x86_64-unknown-linux-musl]
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install -y musl-tools
+      - run: sudo apt-get install -y musl-tools busybox-static
+      - uses: actions/cache@v2
+        with:
+          path: |
+            target/
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+          key: "${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}"
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -52,12 +60,18 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable
+      - uses: docker/setup-buildx-action@v1
       - name: Build docker images
-        run: IMAGE_PREFIX=test-magicpak/ PUSH_IMAGES=false ./dockerfile/build.sh ./magicpak
-      - name: Build examples
+        env:
+          IMAGE_PREFIX: test-magicpak/
+          PUSH_IMAGES: false
+          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
         run: |
           for example in ./example/*; do
             sed -e 's/FROM magicpak/FROM test-magicpak/' -i "$example/Dockerfile"
             grep 'FROM magicpak' "$example/Dockerfile" && exit 1 || true
-            docker build "$example"
+            IMAGE=$(head -1 "$example/Dockerfile" | sed -e 's/FROM \(.*\)/\1/')
+            IMAGE_FILTER=$IMAGE ./dockerfile/build.sh ./magicpak
           done
+      - name: Build examples
+        run: for example in ./example/*; do docker build "$example"; done

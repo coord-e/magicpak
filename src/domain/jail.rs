@@ -82,26 +82,23 @@ impl CommandJailExt for Command {
 mod tests {
     use super::*;
     use assert_cmd::prelude::*;
-    use assert_fs::prelude::*;
     use predicates::prelude::*;
-    use std::io::Read;
+    use std::path::PathBuf;
     use std::process::Command;
 
-    fn download_busybox(
-    ) -> std::result::Result<assert_fs::NamedTempFile, Box<dyn std::error::Error>> {
-        let url =
-            "https://busybox.net/downloads/binaries/1.31.0-defconfig-multiarch-musl/busybox-x86_64";
-        let mut bytes = Vec::new();
-        reqwest::blocking::get(url)?.read_to_end(&mut bytes)?;
-        let dest = assert_fs::NamedTempFile::new("busybox")?;
-        dest.write_binary(&bytes)?;
-        Ok(dest)
+    fn locate_busybox() -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+        let path = if let Ok(path) = std::env::var("MAGICPAK_TEST_STATIC_BUSYBOX") {
+            path.into()
+        } else {
+            which::which("busybox")?
+        };
+        Ok(path)
     }
 
     #[test]
     fn test_install_busybox() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let jail = Jail::new()?;
-        jail.install_busybox(download_busybox()?.path())?;
+        jail.install_busybox(locate_busybox()?)?;
 
         assert_eq!(
             true,
@@ -118,7 +115,7 @@ mod tests {
     #[ignore]
     fn test_jail() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let jail = Jail::new()?;
-        jail.install_busybox(download_busybox()?.path())?;
+        jail.install_busybox(locate_busybox()?)?;
 
         Command::new("pwd")
             .in_jail(&jail)

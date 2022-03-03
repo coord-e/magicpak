@@ -10,7 +10,15 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: sudo apt-get install -y musl-tools
+      - run: sudo apt-get install -y musl-tools busybox-static
+      - uses: actions/cache@v2
+        with:
+          path: |
+            target/
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+          key: "${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}"
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -33,22 +41,15 @@ jobs:
         with:
           name: musl-executable
       - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-      - run: PUSH_IMAGES=true ./dockerfile/build.sh ./magicpak
-  test_examples:
-    name: Test examples
-    runs-on: ubuntu-20.04
-    needs: build_docker_images
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build examples
-        run: |
-          for example in ./example/*; do
-            docker build "$example"
-          done
+      - uses: docker/setup-buildx-action@v1
+      - run: ./dockerfile/build.sh ./magicpak
+        env:
+          PUSH_IMAGES: true
+          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
   release:
     name: Release
     runs-on: ubuntu-20.04
-    needs: test_examples
+    needs: build_docker_images
     steps:
       - uses: actions/download-artifact@v2
         with:
