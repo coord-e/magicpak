@@ -21,7 +21,6 @@ pub enum Error {
     ExecutableLocateFailed(which::Error),
     Upx(String),
     DynamicFailed(ExitStatus),
-    DynamicSignaled(nix::sys::signal::Signal),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     IO(io::Error),
@@ -70,9 +69,6 @@ impl fmt::Display for Error {
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
             Error::DynamicFailed(status) => {
                 write!(f, "Dynamic analysis subproecss failed: {}", status)
-            }
-            Error::DynamicSignaled(sig) => {
-                write!(f, "Dynamic analysis subproecss killed with {}", sig)
             }
             Error::PathEncoding(p) => write!(
                 f,

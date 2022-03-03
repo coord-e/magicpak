@@ -4,7 +4,7 @@ use std::os::unix::ffi::OsStringExt;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Child, Command, ExitStatus, Output};
 
-use crate::base::{Error, Result};
+use crate::base::Result;
 
 use nix::libc;
 
@@ -47,13 +47,13 @@ impl ChildTraceExt for Child {
 
         let child_pid = nix::unistd::Pid::from_raw(self.id() as i32);
 
-        match nix::sys::wait::waitpid(child_pid, None)? {
+        let wstatus = waitpid(child_pid)?;
+        match nix::sys::wait::WaitStatus::from_raw(child_pid, wstatus)? {
             WaitStatus::Stopped(_, Signal::SIGTRAP) => (),
-            WaitStatus::Signaled(_, sig, _) | WaitStatus::Stopped(_, sig) => {
-                return Err(Error::DynamicSignaled(sig))
-            }
-            WaitStatus::Exited(_, code) => {
-                let status = ExitStatus::from_raw(code);
+            WaitStatus::Signaled { .. }
+            | WaitStatus::Stopped { .. }
+            | WaitStatus::Exited { .. } => {
+                let status = ExitStatus::from_raw(wstatus);
                 return output_of_child(&mut self, status);
             }
             _ => unreachable!(),
@@ -68,9 +68,10 @@ impl ChildTraceExt for Child {
         nix::sys::ptrace::syscall(child_pid, None)?;
 
         loop {
-            match nix::sys::wait::waitpid(child_pid, None)? {
-                WaitStatus::Exited(_, code) => {
-                    let status = ExitStatus::from_raw(code);
+            let wstatus = waitpid(child_pid)?;
+            match nix::sys::wait::WaitStatus::from_raw(child_pid, wstatus)? {
+                WaitStatus::Signaled { .. } | WaitStatus::Exited { .. } => {
+                    let status = ExitStatus::from_raw(wstatus);
                     return output_of_child(&mut self, status);
                 }
                 WaitStatus::Stopped(pid, sig) => {
@@ -98,7 +99,6 @@ impl ChildTraceExt for Child {
                     }
                     nix::sys::ptrace::syscall(pid, None)?;
                 }
-                WaitStatus::Signaled(_, sig, _) => return Err(Error::DynamicSignaled(sig)),
                 _ => unreachable!(),
             }
         }
@@ -141,6 +141,16 @@ fn read_string_at(pid: nix::unistd::Pid, mut addr: u64) -> Result<OsString> {
         }
         addr += 4;
     }
+}
+
+// we need a raw wstatus but nix::sys::wait::waitpid does not expose it
+fn waitpid(pid: nix::unistd::Pid) -> nix::Result<i32> {
+    let mut status: i32 = 0;
+
+    let res = unsafe { nix::libc::waitpid(pid.into(), &mut status as *mut nix::libc::c_int, 0) };
+
+    nix::errno::Errno::result(res)?;
+    Ok(status)
 }
 
 #[cfg(test)]
