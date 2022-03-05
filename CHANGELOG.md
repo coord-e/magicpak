@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2022-01-11
+
+- Fix busybox_jail_path file permissions ([#6](https://github.com/coord-e/magicpak/pull/6))
+- Update and renew dependencies ([#7](https://github.com/coord-e/magicpak/pull/7))
+- Fix usage of ExitStatus::from_raw and remove Error::DynamicSignaled ([#9](https://github.com/coord-e/magicpak/pull/9))
+- Several CI fixes ([#8](https://github.com/coord-e/magicpak/pull/8), [#10](https://github.com/coord-e/magicpak/pull/10))
+  - This changed how `busybox` installed in the container images
+
 ## [1.2.0] - 2021-01-11
 
 - Fixed infinite recursion caused by mutually dependent shared libraries. (#[3](https://github.com/coord-e/magicpak/pulls/3))
