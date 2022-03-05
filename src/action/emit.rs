@@ -4,15 +4,13 @@ use std::path::Path;
 use crate::base::{Error, Result};
 use crate::domain::Bundle;
 
-use log::info;
-
 pub fn emit<P>(bundle: &mut Bundle, path: P) -> Result<()>
 where
     P: AsRef<Path>,
 {
-    info!("action: emit {}", path.as_ref().display());
-
     let dest = path.as_ref();
+    tracing::info!(dest = %dest.display(), "action: emit");
+
     if dest.exists() {
         if !dest.is_dir() {
             return Err(Error::InvalidDestination(dest.to_owned()));
@@ -21,9 +19,9 @@ where
             return Err(Error::NonEmptyDestionation(dest.to_owned()));
         }
     } else {
-        info!(
-            "action: emit: creating {} as it does not exist",
-            dest.display()
+        tracing::info!(
+            dest = %dest.display(),
+            "action: emit: creating destination dir as it does not exist",
         );
         fs::create_dir(dest)?;
     };

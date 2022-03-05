@@ -5,18 +5,21 @@ name: Test and Lint
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         target: [x86_64-unknown-linux-musl]
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/toolchain@v1
+      - run: sudo apt-get install -y musl-tools busybox-static
+      - uses: actions/cache@v2
         with:
-          toolchain: stable
-          target: ${{ matrix.target }}
-          default: true
-      - run: sudo apt-get install -y musl-tools
+          path: |
+            target/
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+          key: "${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}"
       - uses: actions-rs/cargo@v1
         with:
           command: build
@@ -32,39 +35,43 @@ jobs:
           args: --release --all-features --target=${{ matrix.target }}
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: rustup component add rustfmt
       - uses: actions-rs/cargo@v1
         with:
           command: fmt
           args: --all -- --check
   clippy:
     name: Clippy
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
-      - run: rustup component add clippy
       - uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features -- -D warnings
   test_examples:
     name: Test examples
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable
+      - uses: docker/setup-buildx-action@v1
       - name: Build docker images
-        run: IMAGE_PREFIX=test-magicpak/ PUSH_IMAGES=false ./dockerfile/build.sh ./magicpak
-      - name: Build examples
+        env:
+          IMAGE_PREFIX: test-magicpak/
+          PUSH_IMAGES: false
+          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
         run: |
           for example in ./example/*; do
             sed -e 's/FROM magicpak/FROM test-magicpak/' -i "$example/Dockerfile"
             grep 'FROM magicpak' "$example/Dockerfile" && exit 1 || true
-            docker build "$example"
+            IMAGE=$(head -1 "$example/Dockerfile" | sed -e 's/FROM \(.*\)/\1/')
+            IMAGE_FILTER=$IMAGE ./dockerfile/build.sh ./magicpak
           done
+      - name: Build examples
+        run: for example in ./example/*; do docker build "$example"; done

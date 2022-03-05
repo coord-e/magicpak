@@ -4,11 +4,9 @@ use std::path::Path;
 use std::process::Command;
 use std::{env, fs};
 
-use crate::base::error;
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
 
-use log::{debug, info};
 use tempfile::TempDir;
 
 pub struct Jail {
@@ -28,16 +26,16 @@ impl Jail {
         let bindir = self.dir.path().join("bin/");
         let busybox_jail_path = bindir.join("busybox");
 
-        info!(
-            "jail: copying busybox {} => {}",
-            busybox_path.as_ref().display(),
-            busybox_jail_path.display()
+        tracing::info!(
+            from_path = %busybox_path.as_ref().display(),
+            jail_path = %busybox_jail_path.display(),
+            "jail: copying busybox",
         );
         if !bindir.exists() {
             fs::create_dir(&bindir)?;
         }
         fs::copy(&busybox_path, &busybox_jail_path)?;
-        fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(755))?;
+        fs::set_permissions(&busybox_jail_path, fs::Permissions::from_mode(0o755))?;
 
         let output = Command::new(busybox_jail_path)
             .arg("--install")
@@ -71,9 +69,9 @@ impl CommandJailExt for Command {
         let jail_path = jail.path().to_owned();
         unsafe {
             self.pre_exec(move || {
-                debug!("jail: chroot to {}", &jail_path.display());
-                nix::unistd::chroot(&jail_path).map_err(error::nix_to_io)?;
-                debug!("jail: chdir to /");
+                tracing::debug!(path = %jail_path.display(), "jail: chroot");
+                nix::unistd::chroot(&jail_path)?;
+                tracing::debug!("jail: chdir to /");
                 env::set_current_dir("/")
             })
         }
@@ -84,26 +82,23 @@ impl CommandJailExt for Command {
 mod tests {
     use super::*;
     use assert_cmd::prelude::*;
-    use assert_fs::prelude::*;
     use predicates::prelude::*;
-    use std::io::Read;
+    use std::path::PathBuf;
     use std::process::Command;
 
-    fn download_busybox(
-    ) -> std::result::Result<assert_fs::NamedTempFile, Box<dyn std::error::Error>> {
-        let url =
-            "https://busybox.net/downloads/binaries/1.31.0-defconfig-multiarch-musl/busybox-x86_64";
-        let mut bytes = Vec::new();
-        reqwest::blocking::get(url)?.read_to_end(&mut bytes)?;
-        let dest = assert_fs::NamedTempFile::new("busybox")?;
-        dest.write_binary(&bytes)?;
-        Ok(dest)
+    fn locate_busybox() -> std::result::Result<PathBuf, Box<dyn std::error::Error>> {
+        let path = if let Ok(path) = std::env::var("MAGICPAK_TEST_STATIC_BUSYBOX") {
+            path.into()
+        } else {
+            which::which("busybox")?
+        };
+        Ok(path)
     }
 
     #[test]
     fn test_install_busybox() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let jail = Jail::new()?;
-        jail.install_busybox(download_busybox()?.path())?;
+        jail.install_busybox(locate_busybox()?)?;
 
         assert_eq!(
             true,
@@ -120,7 +115,7 @@ mod tests {
     #[ignore]
     fn test_jail() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let jail = Jail::new()?;
-        jail.install_busybox(download_busybox()?.path())?;
+        jail.install_busybox(locate_busybox()?)?;
 
         Command::new("pwd")
             .in_jail(&jail)

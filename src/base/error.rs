@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::process::ExitStatus;
 use std::{error, fmt, io, result, str};
 
-use ::goblin::error as goblin;
+use goblin::error as goblin;
 
 #[derive(Debug)]
 pub enum Error {
@@ -21,7 +21,6 @@ pub enum Error {
     ExecutableLocateFailed(which::Error),
     Upx(String),
     DynamicFailed(ExitStatus),
-    DynamicSignaled(nix::sys::signal::Signal),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     IO(io::Error),
@@ -71,9 +70,6 @@ impl fmt::Display for Error {
             Error::DynamicFailed(status) => {
                 write!(f, "Dynamic analysis subproecss failed: {}", status)
             }
-            Error::DynamicSignaled(sig) => {
-                write!(f, "Dynamic analysis subproecss killed with {}", sig)
-            }
             Error::PathEncoding(p) => write!(
                 f,
                 "Unable to interpret the path as UTF-8: {}",
@@ -121,22 +117,12 @@ impl From<glob::PatternError> for Error {
 
 impl From<nix::Error> for Error {
     fn from(err: nix::Error) -> Self {
-        Error::IO(nix_to_io(err))
+        Error::IO(err.into())
     }
 }
 
 impl From<which::Error> for Error {
     fn from(err: which::Error) -> Self {
         Error::ExecutableLocateFailed(err)
-    }
-}
-
-pub fn nix_to_io(nix: nix::Error) -> io::Error {
-    match nix {
-        nix::Error::Sys(errno) => errno.into(),
-        nix::Error::InvalidPath | nix::Error::InvalidUtf8 => {
-            io::Error::new(io::ErrorKind::InvalidData, nix)
-        }
-        nix::Error::UnsupportedOperation => io::Error::new(io::ErrorKind::InvalidInput, nix),
     }
 }

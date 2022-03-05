@@ -2,14 +2,14 @@
 
 [![Actions Status](https://github.com/coord-e/magicpak/workflows/Test%20and%20Lint/badge.svg)](https://github.com/coord-e/magicpak/actions?workflow=Test+and+Lint)
 [![Actions Status](https://github.com/coord-e/magicpak/workflows/Release/badge.svg)](https://github.com/coord-e/magicpak/actions?workflow=Release)
-[![License](https://img.shields.io/crates/l/mkbookpdf)](https://crates.io/crates/mkbookpdf)
+[![License](https://img.shields.io/crates/l/magicpak)](https://crates.io/crates/magicpak)
 
 `magicpak` enables you to build minimal docker images without any bothersome preparation such as static linking.
 
 ```dockerfile
 # You prepare /bin/your_executable here...
 
-ADD https://github.com/coord-e/magicpak/releases/download/v1.2.0/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
+ADD https://github.com/coord-e/magicpak/releases/download/v1.3.0/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
 RUN chmod +x /usr/bin/magicpak
 
 RUN /usr/bin/magicpak -v /bin/your_executable /bundle
@@ -94,7 +94,7 @@ We provide some base images that contain `magicpak` and its optional dependencie
 The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C/C++/etc. ([example/clang-format](/example/clang-format))
 
 ```dockerfile
-FROM magicpak/debian:buster-magicpak1.2.0
+FROM magicpak/debian:buster-magicpak1.3.0
 
 RUN apt-get -y update
 RUN apt-get -y --no-install-recommends install clang-format
