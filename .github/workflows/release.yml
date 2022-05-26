@@ -1,6 +1,5 @@
 on:
   push:
-    tags: ['*']
 
 name: Release
 
@@ -22,52 +21,8 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --release --all-features --target=x86_64-unknown-linux-musl
+          args: --release --all-features --target=aarch64-unknown-linux-musl
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: --release --all-features --target=x86_64-unknown-linux-musl
-      - uses: actions/upload-artifact@v2
-        with:
-          name: musl-executable
-          path: ./target/x86_64-unknown-linux-musl/release/magicpak
-  build_docker_images:
-    name: Build and push docker images
-    runs-on: ubuntu-20.04
-    needs: test
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
-        with:
-          name: musl-executable
-      - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
-      - uses: docker/setup-buildx-action@v1
-      - run: ./dockerfile/build.sh ./magicpak
-        env:
-          PUSH_IMAGES: true
-          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
-  release:
-    name: Release
-    runs-on: ubuntu-20.04
-    needs: build_docker_images
-    steps:
-      - uses: actions/download-artifact@v2
-        with:
-          name: musl-executable
-      - run: mv magicpak magicpak-x86_64-unknown-linux-musl
-      - uses: softprops/action-gh-release@v1
-        with:
-          files: magicpak-*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  upload:
-    name: Upload to crates.io
-    runs-on: ubuntu-20.04
-    needs: release
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions-rs/cargo@v1
-        with:
-          command: publish
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          args: --release --all-features --target=aarch64-unknown-linux-musl
