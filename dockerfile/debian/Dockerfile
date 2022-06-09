@@ -9,7 +9,8 @@ RUN DEBIAN_FRONTEND=noninteractive \
       && rm -rf /var/lib/apt/lists/*
 
 ARG UPX_VERSION
-ARG MAGICPAK_PATH
+ARG MAGICPAK_DIR
+ARG TARGETARCH
 
 ADD https://github.com/upx/upx/releases/download/v${UPX_VERSION}/upx-${UPX_VERSION}-amd64_linux.tar.xz /tmp/upx.tar.xz
 RUN cd /tmp \
@@ -17,5 +18,5 @@ RUN cd /tmp \
       && mv upx /bin/ \
       && rm upx.tar.xz
 
-COPY ${MAGICPAK_PATH} /bin/magicpak
+COPY $MAGICPAK_DIR/$TARGETARCH /bin/magicpak
 RUN chmod +x /bin/magicpak
