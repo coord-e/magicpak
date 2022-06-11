@@ -18,5 +18,5 @@ RUN cd /tmp \
       && mv upx /bin/ \
       && rm upx.tar.xz
 
-COPY $MAGICPAK_DIR/$TARGETARCH /bin/magicpak
+COPY $MAGICPAK_DIR/$TARGETARCH/magicpak /bin/magicpak
 RUN chmod +x /bin/magicpak
