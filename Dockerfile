@@ -1,10 +1,10 @@
 ARG BASE_IMAGE
 FROM ${BASE_IMAGE}
 
-ARG DEBIAN_PACKAGES
+ARG APT_PACKAGES
 RUN DEBIAN_FRONTEND=noninteractive \
       apt-get update -y \
-      && apt-get install -y --no-install-recommends gcc libc-dev xz-utils busybox-static ${DEBIAN_PACKAGES} \
+      && apt-get install -y --no-install-recommends gcc libc-dev xz-utils busybox-static ${APT_PACKAGES} \
       && apt-get clean \
       && rm -rf /var/lib/apt/lists/*
 

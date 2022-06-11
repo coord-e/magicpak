@@ -1,33 +1,29 @@
-variable "version" {}
+variable "VERSION" {}
 
-variable "bin_dir" {}
+variable "BIN_DIR" {}
 
-variable "prefix" {
+variable "IMAGE_PREFIX" {
   default = ["docker.io/magicpak/"]
 }
 
-variable "upx_version" {
+variable "UPX_VERSION" {
   default = "3.96"
 }
 
-target "base-debian" {
-  dockerfile = "dockerfile/debian/Dockerfile"
-  platforms = [
-    "linux/amd64",
-    "linux/arm64",
-  ]
+target "base" {
+  dockerfile = "Dockerfile"
   args = {
-    MAGICPAK_DIR    = bin_dir
-    UPX_VERSION     = upx_version
-    DEBIAN_PACKAGES = ""
+    MAGICPAK_DIR = BIN_DIR
+    UPX_VERSION  = UPX_VERSION
+    APT_PACKAGES = ""
   }
 }
 
 function "tags_for" {
   params = [name, tag]
   result = concat(
-    formatlist("%s${name}:${tag}", prefix),
-    formatlist("%s${name}:%s", prefix, equal(tag, "latest") ? "magicpak${version}" : "${tag}-magicpak${version}"),
+    formatlist("%s${name}:${tag}", IMAGE_PREFIX),
+    formatlist("%s${name}:%s", IMAGE_PREFIX, equal(tag, "latest") ? "magicpak${VERSION}" : "${tag}-magicpak${VERSION}"),
   )
 }
 
@@ -50,7 +46,7 @@ group "debian" {
 }
 
 target "debian-latest" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("debian", "latest")
   args = {
     BASE_IMAGE = "debian:latest"
@@ -58,7 +54,7 @@ target "debian-latest" {
 }
 
 target "debian-bullseye" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("debian", "bullseye")
   args = {
     BASE_IMAGE = "debian:bullseye"
@@ -66,7 +62,7 @@ target "debian-bullseye" {
 }
 
 target "debian-buster" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("debian", "buster")
   args = {
     BASE_IMAGE = "debian:buster"
@@ -74,7 +70,7 @@ target "debian-buster" {
 }
 
 target "debian-stretch" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("debian", "stretch")
   args = {
     BASE_IMAGE = "debian:stretch"
@@ -90,7 +86,7 @@ group "rust" {
 }
 
 target "rust-latest" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("rust", "latest")
   args = {
     BASE_IMAGE = "rust:latest"
@@ -98,7 +94,7 @@ target "rust-latest" {
 }
 
 target "rust-1" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("rust", "1")
   args = {
     BASE_IMAGE = "rust:1"
@@ -106,7 +102,7 @@ target "rust-1" {
 }
 
 target "rust-149" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("rust", "1.49")
   args = {
     BASE_IMAGE = "rust:1.49"
@@ -123,38 +119,38 @@ group "cc" {
 }
 
 target "cc-latest" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("cc", "latest")
   args = {
-    BASE_IMAGE      = "gcc:latest"
-    DEBIAN_PACKAGES = "build-essential clang"
+    BASE_IMAGE   = "gcc:latest"
+    APT_PACKAGES = "build-essential clang"
   }
 }
 
 target "cc-10" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("cc", "10")
   args = {
-    BASE_IMAGE      = "gcc:10"
-    DEBIAN_PACKAGES = "build-essential clang"
+    BASE_IMAGE   = "gcc:10"
+    APT_PACKAGES = "build-essential clang"
   }
 }
 
 target "cc-9" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("cc", "9")
   args = {
-    BASE_IMAGE      = "gcc:9"
-    DEBIAN_PACKAGES = "build-essential clang"
+    BASE_IMAGE   = "gcc:9"
+    APT_PACKAGES = "build-essential clang"
   }
 }
 
 target "cc-8" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("cc", "8")
   args = {
-    BASE_IMAGE      = "gcc:8"
-    DEBIAN_PACKAGES = "build-essential clang"
+    BASE_IMAGE   = "gcc:8"
+    APT_PACKAGES = "build-essential clang"
   }
 }
 
@@ -170,7 +166,7 @@ group "haskell" {
 }
 
 target "haskell-latest" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "latest")
   args = {
     BASE_IMAGE = "haskell:latest"
@@ -178,7 +174,7 @@ target "haskell-latest" {
 }
 
 target "haskell-8" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "8")
   args = {
     BASE_IMAGE = "haskell:8"
@@ -186,7 +182,7 @@ target "haskell-8" {
 }
 
 target "haskell-810" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "8.10")
   args = {
     BASE_IMAGE = "haskell:8.10"
@@ -194,7 +190,7 @@ target "haskell-810" {
 }
 
 target "haskell-8102" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "8.10.2")
   args = {
     BASE_IMAGE = "haskell:8.10.2"
@@ -202,7 +198,7 @@ target "haskell-8102" {
 }
 
 target "haskell-88" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "8.8")
   args = {
     BASE_IMAGE = "haskell:8.8"
@@ -210,7 +206,7 @@ target "haskell-88" {
 }
 
 target "haskell-86" {
-  inherits = ["base-debian"]
+  inherits = ["base"]
   tags     = tags_for("haskell", "8.6")
   args = {
     BASE_IMAGE = "haskell:8.6"
