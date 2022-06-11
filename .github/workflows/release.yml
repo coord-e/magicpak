@@ -48,12 +48,20 @@ jobs:
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable-x86_64-unknown-linux-musl
+      - run: mkdir -p dist/amd64 && mv ./magicpak ./dist/amd64/magicpak
+      - uses: actions/download-artifact@v2
+        with:
+          name: musl-executable-aarch64-unknown-linux-musl
+      - run: mkdir -p dist/arm64 && mv ./magicpak ./dist/arm64/magicpak
+      - uses: docker/setup-qemu-action@v2
+        with:
+          platforms: arm64
       - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
       - uses: docker/setup-buildx-action@v1
-      - run: ./dockerfile/build.sh ./magicpak
+      - run: docker buildx bake --push --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max' --set '*.platform=linux/amd64' --set '*.platform=linux/arm64'
         env:
-          PUSH_IMAGES: true
-          DOCKER_BUILD: "docker buildx build --load --cache-from type=gha --cache-to type=gha,mode=max"
+          BIN_DIR: "./dist"
+          VERSION: "1.3.0"
   release:
     name: Release
     runs-on: ubuntu-20.04
