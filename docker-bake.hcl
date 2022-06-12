@@ -225,3 +225,32 @@ target "haskell-86" {
     BASE_IMAGE = "haskell:8.6"
   }
 }
+
+group "example" {
+  targets = [
+    "example-brittany",
+    "example-clang-format",
+    "example-patchelf",
+  ]
+}
+
+target "example-brittany" {
+  dockerfile = "example/brittany/Dockerfile"
+  contexts = {
+    "magicpak/haskell:8.10.2-magicpak1.3.0" = "target:haskell-8102"
+  }
+}
+
+target "example-clang-format" {
+  dockerfile = "example/clang-format/Dockerfile"
+  contexts = {
+    "magicpak/debian:buster-magicpak1.3.0" = "target:debian-buster"
+  }
+}
+
+target "example-patchelf" {
+  dockerfile = "example/patchelf/Dockerfile"
+  contexts = {
+    "magicpak/cc:10-magicpak1.3.0" = "target:cc-10"
+  }
+}
