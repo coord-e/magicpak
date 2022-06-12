@@ -12,6 +12,10 @@ variable "UPX_VERSION" {
 
 target "base" {
   dockerfile = "Dockerfile"
+  platforms = [
+    "linux/amd64",
+    "linux/arm64",
+  ]
   args = {
     MAGICPAK_DIR = BIN_DIR
     UPX_VERSION  = UPX_VERSION
@@ -192,6 +196,9 @@ target "haskell-810" {
 target "haskell-8102" {
   inherits = ["base"]
   tags     = tags_for("haskell", "8.10.2")
+  platforms = [
+    "linux/amd64"
+  ]
   args = {
     BASE_IMAGE = "haskell:8.10.2"
   }
@@ -200,6 +207,9 @@ target "haskell-8102" {
 target "haskell-88" {
   inherits = ["base"]
   tags     = tags_for("haskell", "8.8")
+  platforms = [
+    "linux/amd64"
+  ]
   args = {
     BASE_IMAGE = "haskell:8.8"
   }
@@ -208,6 +218,9 @@ target "haskell-88" {
 target "haskell-86" {
   inherits = ["base"]
   tags     = tags_for("haskell", "8.6")
+  platforms = [
+    "linux/amd64"
+  ]
   args = {
     BASE_IMAGE = "haskell:8.6"
   }

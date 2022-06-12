@@ -74,7 +74,7 @@ jobs:
           BIN_DIR = "./dist"
           VERSION = "1.3.0"
           EOF
-          docker buildx bake --load --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max' haskell-8102 debian-buster cc-10
+          docker buildx bake --load --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max' --set 'base.platform=linux/amd64' haskell-8102 debian-buster cc-10
       - name: Build examples
         run: |
           for example in ./example/*; do
