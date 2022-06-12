@@ -45,6 +45,8 @@ jobs:
     runs-on: ubuntu-20.04
     needs: test
     steps:
+      - name: Free up disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
