@@ -18,6 +18,7 @@ jobs:
       - run: sudo apt-get install -y musl-tools busybox-static
       - run: sudo apt-get install -y gcc-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-musl'
+      - run: rustup target add ${{ matrix.target }}
       - uses: actions/cache@v2
         with:
           path: |
@@ -30,15 +31,15 @@ jobs:
         with:
           command: build
           args: --release --all-features --target=${{ matrix.target }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: musl-executable-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/magicpak
       - uses: actions-rs/cargo@v1
         with:
           command: test
           args: --release --all-features --target=${{ matrix.target }}
         if: matrix.target == 'x86_64-unknown-linux-musl'  # TODO: test aarch64
-      - uses: actions/upload-artifact@v2
-        with:
-          name: musl-executable-${{ matrix.target }}
-          path: ./target/${{ matrix.target }}/release/magicpak
   build_docker_images:
     name: Build and push docker images
     runs-on: ubuntu-20.04
