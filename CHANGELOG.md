@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2022-06-19
+
+- AArch64 support ([#14](https://github.com/coord-e/magicpak/pull/14))
+- Use docker buildx bake to build container images ([#15](https://github.com/coord-e/magicpak/pull/15))
+
 ## [1.3.0] - 2022-01-11
 
 - Fix busybox_jail_path file permissions ([#6](https://github.com/coord-e/magicpak/pull/6))

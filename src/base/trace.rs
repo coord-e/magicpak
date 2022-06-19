@@ -82,21 +82,7 @@ impl ChildTraceExt for Child {
                     nix::sys::ptrace::syscall(pid, None)?;
                 }
                 WaitStatus::PtraceSyscall(pid) => {
-                    let regs = getregs(pid)?;
-                    match regs.orig_rax as i64 {
-                        libc::SYS_openat => {
-                            let dirfd = regs.rdi as i32;
-                            let pathname = read_string_at(pid, regs.rsi)?;
-                            let flags = regs.rdx as i32;
-                            (handler.openat)(dirfd, pathname, flags);
-                        }
-                        libc::SYS_open => {
-                            let pathname = read_string_at(pid, regs.rdi)?;
-                            let flags = regs.rsi as i32;
-                            (handler.open)(pathname, flags);
-                        }
-                        _ => (),
-                    }
+                    handle_syscall(&mut handler, pid)?;
                     nix::sys::ptrace::syscall(pid, None)?;
                 }
                 _ => unreachable!(),
@@ -122,8 +108,69 @@ fn output_of_child(child: &mut Child, status: ExitStatus) -> Result<Output> {
     Ok(output)
 }
 
+#[cfg(target_arch = "x86_64")]
+fn handle_syscall<FOpen, FOpenAt>(
+    handler: &mut SyscallHandler<FOpen, FOpenAt>,
+    pid: nix::unistd::Pid,
+) -> Result<()>
+where
+    FOpen: FnMut(OsString, i32),
+    FOpenAt: FnMut(i32, OsString, i32),
+{
+    let regs = getregs(pid)?;
+    match regs.orig_rax as i64 {
+        libc::SYS_openat => {
+            let dirfd = regs.rdi as i32;
+            let pathname = read_string_at(pid, regs.rsi)?;
+            let flags = regs.rdx as i32;
+            (handler.openat)(dirfd, pathname, flags);
+        }
+        libc::SYS_open => {
+            let pathname = read_string_at(pid, regs.rdi)?;
+            let flags = regs.rsi as i32;
+            (handler.open)(pathname, flags);
+        }
+        _ => (),
+    }
+    Ok(())
+}
+
+#[cfg(target_arch = "aarch64")]
+fn handle_syscall<FOpen, FOpenAt>(
+    handler: &mut SyscallHandler<FOpen, FOpenAt>,
+    pid: nix::unistd::Pid,
+) -> Result<()>
+where
+    FOpen: FnMut(OsString, i32),
+    FOpenAt: FnMut(i32, OsString, i32),
+{
+    let regs = getregs(pid)?;
+    match regs.regs[8] as i64 {
+        libc::SYS_openat => {
+            let dirfd = regs.regs[0] as i32;
+            let pathname = read_string_at(pid, regs.regs[1])?;
+            let flags = regs.regs[2] as i32;
+            (handler.openat)(dirfd, pathname, flags);
+        }
+        _ => (),
+    }
+    Ok(())
+}
+
+// libc::NT_PRSTATUS unavailable on musl
+const NT_PRSTATUS: libc::c_int = 1;
+
 fn getregs(pid: nix::unistd::Pid) -> Result<libc::user_regs_struct> {
-    nix::sys::ptrace::getregs(pid).map_err(Into::into)
+    let mut data = std::mem::MaybeUninit::<libc::user_regs_struct>::uninit();
+    let mut iov = libc::iovec {
+        iov_base: data.as_mut_ptr() as *mut std::ffi::c_void,
+        iov_len: std::mem::size_of::<libc::user_regs_struct>(),
+    };
+
+    let res = unsafe { libc::ptrace(libc::PTRACE_GETREGSET, pid, NT_PRSTATUS, &mut iov as *mut _) };
+
+    nix::errno::Errno::result(res)?;
+    Ok(unsafe { data.assume_init() })
 }
 
 fn read_string_at(pid: nix::unistd::Pid, mut addr: u64) -> Result<OsString> {
