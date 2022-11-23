@@ -9,7 +9,7 @@
 ```dockerfile
 # You prepare /bin/your_executable here...
 
-ADD https://github.com/coord-e/magicpak/releases/download/v1.3.1/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
+ADD https://github.com/coord-e/magicpak/releases/download/v1.3.2/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
 RUN chmod +x /usr/bin/magicpak
 
 RUN /usr/bin/magicpak -v /bin/your_executable /bundle
@@ -94,7 +94,7 @@ We provide some base images that contain `magicpak` and its optional dependencie
 The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C/C++/etc. ([example/clang-format](/example/clang-format))
 
 ```dockerfile
-FROM magicpak/debian:buster-magicpak1.3.1
+FROM magicpak/debian:buster-magicpak1.3.2
 
 RUN apt-get -y update
 RUN apt-get -y --no-install-recommends install clang-format
@@ -113,6 +113,16 @@ COPY --from=0 /bundle /.
 WORKDIR /workdir
 
 CMD ["/bin/clang-format"]
+```
+
+### Note on name resolution and glibc
+
+If your program uses glibc for name resolution (most likely it does), the call to getaddrinfo(3) will result in an error after bundled by magicpak.
+This can be resolved by manually including the NSS-related shared libraries as shown below.
+
+```dockerfile
+# example on x86_64 Debian-based image:
+RUN magicpak path/to/executable /bundle --include '/lib/x86_64-linux-gnu/libnss_*'
 ```
 
 ## Disclaimer

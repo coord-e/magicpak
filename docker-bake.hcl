@@ -237,20 +237,20 @@ group "example" {
 target "example-brittany" {
   dockerfile = "example/brittany/Dockerfile"
   contexts = {
-    "magicpak/haskell:8.10.2-magicpak1.3.1" = "target:haskell-8102"
+    "magicpak/haskell:8.10.2-magicpak1.3.2" = "target:haskell-8102"
   }
 }
 
 target "example-clang-format" {
   dockerfile = "example/clang-format/Dockerfile"
   contexts = {
-    "magicpak/debian:buster-magicpak1.3.1" = "target:debian-buster"
+    "magicpak/debian:buster-magicpak1.3.2" = "target:debian-buster"
   }
 }
 
 target "example-patchelf" {
   dockerfile = "example/patchelf/Dockerfile"
   contexts = {
-    "magicpak/cc:10-magicpak1.3.1" = "target:cc-10"
+    "magicpak/cc:10-magicpak1.3.2" = "target:cc-10"
   }
 }

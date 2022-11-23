@@ -3,7 +3,7 @@ use std::ffi::OsStr;
 use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::{env, fs, io};
+use std::{env, fs};
 
 use crate::base::log::CommandLogExt;
 use crate::base::{Error, Result};
@@ -47,7 +47,7 @@ impl Executable {
         name: String,
         propagated_rpaths: Option<Vec<PathBuf>>,
     ) -> Result<Self> {
-        tracing::info!(location = %location.as_ref().display(), "exe: loading");
+        tracing::debug!(location = %location.as_ref().display(), "exe: loading");
         let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
         let interpreter = if let Some(interp) = elf.interpreter {
@@ -55,7 +55,7 @@ impl Executable {
         } else {
             let interp = default_interpreter(&location)?;
             if let Some(interp) = &interp {
-                tracing::info!(interp = %interp.display(), "exe: using default interpreter");
+                tracing::debug!(interp = %interp.display(), "exe: using default interpreter");
             } else {
                 tracing::warn!(
                     "exe: interpreter could not be found. static or compressed executable?"
@@ -87,13 +87,11 @@ impl Executable {
         P: AsRef<Path>,
     {
         let path = exe_path.as_ref();
-        if path.is_dir() {
-            return Err(Error::IO(io::Error::from_raw_os_error(21)));
-        }
 
         let location = ExecutableLocation::Fixed(path.to_owned());
-        // unwrap is ok because `path` here is not a directory
-        let file_name = path.file_name().unwrap();
+        let file_name = path
+            .file_name()
+            .ok_or_else(|| Error::InvalidObjectPath(path.to_owned()))?;
         let file_name_str = file_name
             .to_str()
             .ok_or_else(|| Error::PathEncoding(file_name.to_os_string()))?
@@ -137,7 +135,7 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths, cc_path.as_ref())?;
+        let resolver = resolver::Resolver::new(interpreter, &self.search_paths, cc_path.as_ref())?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {

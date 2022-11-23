@@ -1,4 +1,4 @@
-FROM magicpak/debian:buster-magicpak1.3.1
+FROM magicpak/debian:buster-magicpak1.3.2
 
 RUN apt-get -y update
 RUN apt-get -y --no-install-recommends install clang-format

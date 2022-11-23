@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.2] - 2022-11-23
+
+- Fix not to canonicalize paths in `--include` ([#20](https://github.com/coord-e/magicpak/pull/20))
+- Search statically linked dependencies of ELF objects specified by `--include` ([#33](https://github.com/coord-e/magicpak/pull/33))
+  - To deal with getaddrinfo(3) issue described in ([#12](https://github.com/coord-e/magicpak/issues/12))
+- Improve error messages ([#36](https://github.com/coord-e/magicpak/pull/36))
+- Dependency updates
+
 ## [1.3.1] - 2022-06-19
 
 - AArch64 support ([#14](https://github.com/coord-e/magicpak/pull/14))
