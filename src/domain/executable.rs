@@ -137,7 +137,7 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(&interpreter, &self.search_paths, cc_path.as_ref())?;
+        let resolver = resolver::Resolver::new(interpreter, &self.search_paths, cc_path.as_ref())?;
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
