@@ -28,7 +28,7 @@ jobs:
             ~/.cargo/registry/index/
           key: "${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}"
       - run: cargo build --release --all-features --target=${{ matrix.target }} --locked
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: musl-executable-${{ matrix.target }}
           path: ./target/${{ matrix.target }}/release/magicpak
