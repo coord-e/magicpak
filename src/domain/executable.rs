@@ -47,7 +47,7 @@ impl Executable {
         name: String,
         propagated_rpaths: Option<Vec<PathBuf>>,
     ) -> Result<Self> {
-        tracing::info!(location = %location.as_ref().display(), "exe: loading");
+        tracing::debug!(location = %location.as_ref().display(), "exe: loading");
         let buffer = fs::read(location.as_ref())?;
         let elf = Elf::parse(buffer.as_slice())?;
         let interpreter = if let Some(interp) = elf.interpreter {
@@ -55,7 +55,7 @@ impl Executable {
         } else {
             let interp = default_interpreter(&location)?;
             if let Some(interp) = &interp {
-                tracing::info!(interp = %interp.display(), "exe: using default interpreter");
+                tracing::debug!(interp = %interp.display(), "exe: using default interpreter");
             } else {
                 tracing::warn!(
                     "exe: interpreter could not be found. static or compressed executable?"
