@@ -27,18 +27,12 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/registry/index/
           key: "${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features --target=${{ matrix.target }}
+      - run: cargo build --release --all-features --target=${{ matrix.target }}
       - uses: actions/upload-artifact@v2
         with:
           name: musl-executable-${{ matrix.target }}
           path: ./target/${{ matrix.target }}/release/magicpak
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --all-features --target=${{ matrix.target }}
+      - run: cargo test --release --all-features --target=${{ matrix.target }}
         if: matrix.target == 'x86_64-unknown-linux-musl'  # TODO: test aarch64
   build_docker_images:
     name: Build and push docker images
@@ -90,8 +84,6 @@ jobs:
     needs: release
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/cargo@v1
-        with:
-          command: publish
+      - run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
