@@ -6,7 +6,7 @@ pub fn include_glob(bundle: &mut Bundle, pattern: &str) -> Result<()> {
 
     for entry in glob::glob(pattern)? {
         match entry {
-            Ok(path) => bundle.add(path.canonicalize()?),
+            Ok(path) => bundle.add(path),
             Err(e) => tracing::warn!(error = %e, "action: include_glob: Ignoring glob match"),
         }
     }
