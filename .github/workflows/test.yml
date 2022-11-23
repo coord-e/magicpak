@@ -5,7 +5,7 @@ name: Test and Lint
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
@@ -34,19 +34,19 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'  # TODO: test aarch64
   fmt:
     name: Rustfmt
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - run: cargo fmt --all -- --check
   clippy:
     name: Clippy
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - run: cargo clippy --all-features -- -D warnings
   test_examples:
     name: Test examples
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     steps:
       - uses: actions/checkout@v2
