@@ -44,11 +44,11 @@ jobs:
       - name: Free up disk space
         run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android
       - uses: actions/checkout@v3
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: musl-executable-x86_64-unknown-linux-musl
       - run: mkdir -p dist/amd64 && mv ./magicpak ./dist/amd64/magicpak
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: musl-executable-aarch64-unknown-linux-musl
       - run: mkdir -p dist/arm64 && mv ./magicpak ./dist/arm64/magicpak
@@ -74,7 +74,7 @@ jobs:
           - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-musl
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: musl-executable-${{ matrix.target }}
       - run: mv magicpak magicpak-${{ matrix.target }}
