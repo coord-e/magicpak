@@ -14,7 +14,7 @@ jobs:
     env:
       CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: sudo apt-get install -y musl-tools busybox-static
       - run: sudo apt-get install -y gcc-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-musl'
@@ -38,20 +38,20 @@ jobs:
     name: Rustfmt
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: cargo fmt --all -- --check
   clippy:
     name: Clippy
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - run: cargo clippy --all-features -- -D warnings
   test_examples:
     name: Test examples
     runs-on: ubuntu-22.04
     needs: test
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/download-artifact@v2
         with:
           name: musl-executable-x86_64-unknown-linux-musl
