@@ -127,7 +127,7 @@ fn run(args: &Args) -> Result<()> {
     }
 
     for glob in &args.include {
-        action::include_glob(&mut bundle, glob)?;
+        action::include_glob(&mut bundle, glob, &args.cc)?;
     }
 
     for glob in &args.exclude {

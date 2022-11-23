@@ -115,6 +115,16 @@ WORKDIR /workdir
 CMD ["/bin/clang-format"]
 ```
 
+### Note on name resolution and glibc
+
+If your program uses glibc for name resolution (most likely it does), the call to getaddrinfo(3) will result in an error after bundled by magicpak.
+This can be resolved by manually including the NSS-related shared libraries as shown below.
+
+```dockerfile
+# example on x86_64 Debian-based image:
+RUN magicpak path/to/executable /bundle --include '/lib/x86_64-linux-gnu/libnss_*'
+```
+
 ## Disclaimer
 
 `magicpak` comes with absolutely no warranty. There's no guarantee that the processed bundle works properly and identically to the original executable. Although I had no problem using `magicpak` for building various kinds of images, it is recommended to use this with caution and make a careful examination of the resulting bundle.
