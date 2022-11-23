@@ -26,7 +26,8 @@ where
 
     tracing::info!(%command, "action: test the bundle");
 
-    let busybox_path = which::which(busybox)?;
+    let busybox_path =
+        which::which(busybox).map_err(|e| Error::ExecutableLocateFailed(busybox.to_owned(), e))?;
 
     let mut test_bundle = bundle.clone();
     test_bundle.add_pseudo_proc(exe);

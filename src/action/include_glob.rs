@@ -1,10 +1,10 @@
-use crate::base::Result;
+use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
 pub fn include_glob(bundle: &mut Bundle, pattern: &str, cc: &str) -> Result<()> {
     tracing::info!(%pattern, "action: include using glob");
 
-    let cc_path = which::which(cc)?;
+    let cc_path = which::which(cc).map_err(|e| Error::ExecutableLocateFailed(cc.to_owned(), e))?;
 
     for entry in glob::glob(pattern)? {
         match entry {

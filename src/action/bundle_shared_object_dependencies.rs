@@ -1,4 +1,4 @@
-use crate::base::Result;
+use crate::base::{Error, Result};
 use crate::domain::{Bundle, Executable};
 
 pub fn bundle_shared_object_dependencies(
@@ -11,7 +11,7 @@ pub fn bundle_shared_object_dependencies(
         "action: bundle shared object dependencies",
     );
 
-    let cc_path = which::which(cc)?;
+    let cc_path = which::which(cc).map_err(|e| Error::ExecutableLocateFailed(cc.to_owned(), e))?;
 
     bundle.add(exe.interpreter());
     bundle.add(exe.dynamic_libraries(cc_path)?);

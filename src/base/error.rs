@@ -18,7 +18,7 @@ pub enum Error {
     BusyBoxInstall(String),
     TestFailed(String),
     TestStdoutMismatch { expected: String, got: String },
-    ExecutableLocateFailed(which::Error),
+    ExecutableLocateFailed(String, which::Error),
     Upx(String),
     DynamicFailed(ExitStatus),
     Encoding(str::Utf8Error),
@@ -65,7 +65,9 @@ impl fmt::Display for Error {
                 expected, got
             ),
             Error::Encoding(e) => write!(f, "Encoding error: {}", e),
-            Error::ExecutableLocateFailed(e) => write!(f, "Unable to locate executable: {}", e),
+            Error::ExecutableLocateFailed(exe, e) => {
+                write!(f, "Unable to locate executable '{}': {}", exe, e)
+            }
             Error::Upx(e) => write!(f, "upx failed with non-zero exit code: {}", e),
             Error::DynamicFailed(status) => {
                 write!(f, "Dynamic analysis subproecss failed: {}", status)
@@ -118,11 +120,5 @@ impl From<glob::PatternError> for Error {
 impl From<nix::Error> for Error {
     fn from(err: nix::Error) -> Self {
         Error::IO(err.into())
-    }
-}
-
-impl From<which::Error> for Error {
-    fn from(err: which::Error) -> Self {
-        Error::ExecutableLocateFailed(err)
     }
 }
