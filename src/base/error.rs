@@ -23,6 +23,7 @@ pub enum Error {
     DynamicFailed(ExitStatus),
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
+    InvalidObjectPath(PathBuf),
     IO(io::Error),
 }
 
@@ -77,6 +78,9 @@ impl fmt::Display for Error {
                 "Unable to interpret the path as UTF-8: {}",
                 p.to_string_lossy()
             ),
+            Error::InvalidObjectPath(p) => {
+                write!(f, "Invalid ELF object file path '{}'", p.display())
+            }
             Error::IO(e) => write!(f, "IO error: {}", e),
         }
     }
