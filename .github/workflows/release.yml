@@ -7,12 +7,14 @@ name: Release
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         target:
           - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-musl
+    env:
+      CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
     steps:
       - uses: actions/checkout@v2
       - run: sudo apt-get install -y musl-tools busybox-static
@@ -27,22 +29,16 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/registry/index/
           key: "${{ runner.os }}-cargo-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}"
-      - uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --all-features --target=${{ matrix.target }}
+      - run: cargo build --release --all-features --target=${{ matrix.target }} --locked
       - uses: actions/upload-artifact@v2
         with:
           name: musl-executable-${{ matrix.target }}
           path: ./target/${{ matrix.target }}/release/magicpak
-      - uses: actions-rs/cargo@v1
-        with:
-          command: test
-          args: --release --all-features --target=${{ matrix.target }}
+      - run: cargo test --release --all-features --target=${{ matrix.target }}
         if: matrix.target == 'x86_64-unknown-linux-musl'  # TODO: test aarch64
   build_docker_images:
     name: Build and push docker images
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: test
     steps:
       - name: Free up disk space
@@ -59,7 +55,10 @@ jobs:
       - uses: docker/setup-qemu-action@v2
         with:
           platforms: arm64
-      - run: docker login -u ${{ secrets.DOCKER_HUB_USERNAME }} -p ${{ secrets.DOCKER_HUB_PASSWORD }}
+      - uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_PASSWORD }}
       - uses: docker/setup-buildx-action@v1
       - run: docker buildx bake --push --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max'
         env:
@@ -67,7 +66,7 @@ jobs:
           VERSION: "1.3.1"
   release:
     name: Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build_docker_images
     strategy:
       matrix:
@@ -86,12 +85,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   upload:
     name: Upload to crates.io
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: release
     steps:
       - uses: actions/checkout@v2
-      - uses: actions-rs/cargo@v1
-        with:
-          command: publish
+      - run: cargo publish
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
