@@ -63,7 +63,7 @@ jobs:
       - run: docker buildx bake --push --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max'
         env:
           BIN_DIR: "./dist"
-          VERSION: "1.3.1"
+          VERSION: "1.3.2"
   release:
     name: Release
     runs-on: ubuntu-22.04

@@ -1,4 +1,4 @@
-FROM magicpak/haskell:8.10.2-magicpak1.3.1
+FROM magicpak/haskell:8.10.2-magicpak1.3.2
 
 RUN apt-get -y update
 RUN apt-get -y install unzip libtinfo5
