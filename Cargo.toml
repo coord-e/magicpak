@@ -19,7 +19,7 @@ name = "magicpak"
 path = "src/magicpak.rs"
 
 [dependencies]
-clap = { version = "3", features = ["env", "derive"] }
+clap = { version = "4", features = ["env", "derive"] }
 crt0stack = "0.1"
 glob = "0.3.0"
 goblin = "0.4"
