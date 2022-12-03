@@ -103,14 +103,8 @@ impl From<str::Utf8Error> for Error {
 impl From<goblin::Error> for Error {
     fn from(err: goblin::Error) -> Self {
         match err {
-            goblin::Error::Malformed(e) => Error::MalformedExecutable(e),
-            goblin::Error::BadMagic(e) => {
-                Error::MalformedExecutable(format!("unknown magic number: {}", e))
-            }
-            goblin::Error::Scroll(e) => {
-                Error::MalformedExecutable(format!("unable to read bytes: {}", e))
-            }
             goblin::Error::IO(e) => Error::IO(e),
+            e => Error::MalformedExecutable(e.to_string()),
         }
     }
 }
