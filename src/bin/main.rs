@@ -6,62 +6,85 @@ use magicpak::domain::{Bundle, Executable};
 
 use clap::Parser;
 
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[value(rename_all = "PascalCase")]
+enum LogLevel {
+    Off,
+    Error,
+    Warn,
+    Info,
+    Debug,
+}
+
+impl LogLevel {
+    fn to_level_filter(self) -> tracing_subscriber::filter::LevelFilter {
+        use tracing_subscriber::filter::LevelFilter;
+        match self {
+            LogLevel::Off => LevelFilter::OFF,
+            LogLevel::Error => LevelFilter::ERROR,
+            LogLevel::Warn => LevelFilter::WARN,
+            LogLevel::Info => LevelFilter::INFO,
+            LogLevel::Debug => LevelFilter::DEBUG,
+        }
+    }
+}
+
 #[derive(Parser)]
-#[clap(name = "magicpak")]
+#[command(name = "magicpak")]
 struct Args {
-    #[clap(value_name = "INPUT", parse(from_os_str))]
+    #[arg(value_name = "INPUT")]
     /// Input executable
     input: PathBuf,
 
-    #[clap(value_name = "OUTPUT", parse(from_os_str))]
+    #[arg(value_name = "OUTPUT")]
     /// Output destination
     output: PathBuf,
 
-    #[clap(short, long, value_name = "GLOB")]
+    #[arg(short, long, value_name = "GLOB")]
     /// Additionally include files/directories with glob patterns
     include: Vec<String>,
 
-    #[clap(short, long, value_name = "GLOB")]
+    #[arg(short, long, value_name = "GLOB")]
     /// Exclude files/directories from the resulting bundle with glob patterns
     exclude: Vec<String>,
 
-    #[clap(long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH")]
     /// Make directories in the resulting bundle
     mkdir: Vec<String>,
 
-    #[clap(short = 'r', long, value_name = "PATH")]
+    #[arg(short = 'r', long, value_name = "PATH")]
     /// Specify the installation path of the executable in the bundle
     install_to: Option<String>,
 
-    #[clap(long, value_name = "LEVEL", default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
+    #[arg(long, value_name = "LEVEL", default_value = "Warn")]
     /// Specify the log level
-    log_level: tracing_subscriber::filter::LevelFilter,
+    log_level: LogLevel,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Verbose mode, same as --log-level Info
     verbose: bool,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Enable testing
     test: bool,
 
-    #[clap(long, value_name = "COMMAND")]
+    #[arg(long, value_name = "COMMAND")]
     /// Specify the test command to use in --test
     test_command: Option<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Specify stdin content supplied to the test command in --test
     test_stdin: Option<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Test stdout of the test command
     test_stdout: Option<String>,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Enable dynamic analysis
     dynamic: bool,
 
-    #[clap(
+    #[arg(
         long,
         value_name = "ARG",
         allow_hyphen_values = true,
@@ -70,15 +93,15 @@ struct Args {
     /// Specify arguments passed to the executable in --dynamic
     dynamic_arg: Vec<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Specify stdin content supplied to the executable in --dynamic
     dynamic_stdin: Option<String>,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Compress the executable with npx
     compress: bool,
 
-    #[clap(
+    #[arg(
         long,
         value_name = "ARG",
         allow_hyphen_values = true,
@@ -87,15 +110,15 @@ struct Args {
     /// Specify arguments passed to upx in --compress
     upx_arg: Vec<String>,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "busybox")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "busybox")]
     /// Specify the path or name of busybox that would be used in testing
     busybox: String,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "upx")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "upx")]
     /// Specify the path or name of upx that would be used in compression
     upx: String,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "cc", env = "CC")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "cc", env = "CC")]
     /// Specify the path or name of c compiler that would be used in
     /// the name resolution of shared library dependencies
     cc: String,
@@ -156,7 +179,7 @@ fn main() {
     let level_filter = if args.verbose {
         tracing_subscriber::filter::LevelFilter::INFO
     } else {
-        args.log_level
+        args.log_level.to_level_filter()
     };
 
     use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
