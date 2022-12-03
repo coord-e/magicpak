@@ -22,7 +22,7 @@ path = "src/magicpak.rs"
 clap = { version = "3", features = ["env", "derive"] }
 crt0stack = "0.1"
 glob = "0.3.0"
-goblin = "0.4"
+goblin = "0.6"
 nix = "0.24"
 tempfile = "3.1.0"
 tracing = "0.1"
