@@ -122,6 +122,10 @@ struct Args {
     /// Specify the path or name of c compiler that would be used in
     /// the name resolution of shared library dependencies
     cc: String,
+
+    #[clap(long)]
+    /// [EXPERIMENTAL] Resolve dynamic library paths without loading in dlopen(3).
+    experimental_noload_resolver: bool,
 }
 
 fn run(args: &Args) -> Result<()> {
@@ -133,7 +137,11 @@ fn run(args: &Args) -> Result<()> {
         .collect::<Result<Vec<_>>>()?;
 
     for exe in &exes {
-        action::bundle_shared_object_dependencies(&mut bundle, exe, &args.cc)?;
+        if args.experimental_noload_resolver {
+            action::bundle_shared_object_dependencies_noload(&mut bundle, exe, &args.cc)?;
+        } else {
+            action::bundle_shared_object_dependencies(&mut bundle, exe, &args.cc)?;
+        }
     }
 
     if args.dynamic {
@@ -164,7 +172,11 @@ fn run(args: &Args) -> Result<()> {
     }
 
     for glob in &args.include {
-        action::include_glob(&mut bundle, glob, &args.cc)?;
+        if args.experimental_noload_resolver {
+            action::include_glob_noload(&mut bundle, glob, &args.cc)?;
+        } else {
+            action::include_glob(&mut bundle, glob, &args.cc)?;
+        }
     }
 
     for glob in &args.exclude {

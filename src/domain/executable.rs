@@ -122,6 +122,7 @@ impl Executable {
         &self,
         resolving_libraries: &mut HashSet<String>,
         cc_path: P,
+        is_noload: bool,
     ) -> Result<Vec<PathBuf>>
     where
         P: AsRef<Path>,
@@ -135,7 +136,11 @@ impl Executable {
             return Ok(Vec::new());
         };
 
-        let resolver = resolver::Resolver::new(interpreter, &self.search_paths, cc_path.as_ref())?;
+        let resolver = if is_noload {
+            resolver::Resolver::new_noload(interpreter, &self.search_paths, cc_path.as_ref())?
+        } else {
+            resolver::Resolver::new(interpreter, &self.search_paths, cc_path.as_ref())?
+        };
 
         let mut paths = Vec::new();
         for lib in &self.libraries {
@@ -152,7 +157,7 @@ impl Executable {
                 // TODO: deal with semantic inconsistency (Executable on shared object)
                 let mut children =
                     Executable::load_with_rpaths(path.clone(), self.search_paths.rpath().cloned())?
-                        .dynamic_libraries_impl(resolving_libraries, cc_path.as_ref())?;
+                        .dynamic_libraries_impl(resolving_libraries, cc_path.as_ref(), is_noload)?;
 
                 paths.push(path);
                 paths.append(&mut children);
@@ -167,7 +172,15 @@ impl Executable {
         P: AsRef<Path>,
     {
         let mut resolving_libraries = HashSet::new();
-        self.dynamic_libraries_impl(&mut resolving_libraries, cc_path)
+        self.dynamic_libraries_impl(&mut resolving_libraries, cc_path, false)
+    }
+
+    pub fn dynamic_libraries_noload<P>(&self, cc_path: P) -> Result<Vec<PathBuf>>
+    where
+        P: AsRef<Path>,
+    {
+        let mut resolving_libraries = HashSet::new();
+        self.dynamic_libraries_impl(&mut resolving_libraries, cc_path, true)
     }
 
     pub fn compressed<P, T, I>(&self, upx_path: P, upx_opts: I) -> Result<Executable>
