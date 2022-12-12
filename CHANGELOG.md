@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2022-12-12
+
+- Ignore already emitted symlinks ([#49](https://github.com/coord-e/magicpak/pull/49))
+- Enable to supply multiple inputs ([#50](https://github.com/coord-e/magicpak/pull/50))
+- Add noload resolver to avoid loading with dlopen(3) ([#51](https://github.com/coord-e/magicpak/pull/51))
+- Dependency updates
+
 ## [1.3.2] - 2022-11-23
 
 - Fix not to canonicalize paths in `--include` ([#20](https://github.com/coord-e/magicpak/pull/20))
