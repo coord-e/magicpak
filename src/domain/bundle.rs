@@ -162,7 +162,19 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
             target = %target.display(),
             "emit: link",
         );
-        unix::fs::symlink(&link_dest_absolute, target)?;
+        match target.read_link() {
+            // the bundle may contain an entry that symlinks to `target`
+            Ok(target_link_dest) if target_link_dest == link_dest_absolute => {
+                tracing::debug!(
+                    link = %link_dest_absolute.display(),
+                    target = %target.display(),
+                    "emit: already linked, skipping",
+                );
+            }
+            _ => {
+                unix::fs::symlink(&link_dest_absolute, target)?;
+            }
+        }
         sync_copy(
             &link_dest_absolute,
             BundlePath::projection(&link_dest_absolute),
