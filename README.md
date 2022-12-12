@@ -9,7 +9,7 @@
 ```dockerfile
 # You prepare /bin/your_executable here...
 
-ADD https://github.com/coord-e/magicpak/releases/download/v1.3.2/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
+ADD https://github.com/coord-e/magicpak/releases/download/v1.4.0/magicpak-x86_64-unknown-linux-musl /usr/bin/magicpak
 RUN chmod +x /usr/bin/magicpak
 
 RUN /usr/bin/magicpak -v /bin/your_executable /bundle
@@ -54,28 +54,33 @@ The size of the resulting image is our main concern. `magicpak` supports executa
 ### Supported options
 
 ```
-  magicpak [OPTIONS] <INPUT> <OUTPUT>
+Usage: magicpak [OPTIONS] <INPUT>... <OUTPUT>
 
-    -r, --install-to <PATH>          Specify the installation path of the executable in the bundle
-    -e, --exclude <GLOB>...          Exclude files/directories from the resulting bundle with glob patterns
-    -i, --include <GLOB>...          Additionally include files/directories with glob patterns
-        --mkdir <PATH>...            Make directories in the resulting bundle
-    -d, --dynamic                    Enable dynamic analysis
-        --dynamic-arg <ARG>...       Specify arguments passed to the executable in --dynamic
-        --dynamic-stdin <CONTENT>    Specify stdin content supplied to the executable in --dynamic
-    -t, --test                       Enable testing
-        --test-command <COMMAND>     Specify the test command to use in --test
-        --test-stdin <CONTENT>       Specify stdin content supplied to the test command in --test
-        --test-stdout <CONTENT>      Test stdout of the test command
-    -c, --compress                   Compress the executable with npx
-        --upx-arg <ARG>...           Specify arguments passed to upx in --compress
-        --upx <PATH or NAME>         Specify the path or name of upx that would be used in compression
-        --busybox <PATH or NAME>     Specify the path or name of busybox that would be used in testing
-        --cc <PATH or NAME>          Specify the path or name of c compiler
-        --log-level <LEVEL>          Specify the log level
-    -v, --verbose                    Verbose mode, same as --log-level Info
-    -h, --help                       Prints help information
-    -V, --version                    Prints version information
+Arguments:
+  <INPUT>...  Input executable
+  <OUTPUT>    Output destination
+
+Options:
+  -i, --include <GLOB>                Additionally include files/directories with glob patterns
+  -e, --exclude <GLOB>                Exclude files/directories from the resulting bundle with glob patterns
+      --mkdir <PATH>                  Make directories in the resulting bundle
+  -r, --install-to <PATH>             Specify the installation path of the executable in the bundle
+      --log-level <LEVEL>             Specify the log level [default: Warn] [possible values: Off, Error, Warn, Info, Debug]
+  -v, --verbose                       Verbose mode, same as --log-level Info
+  -t, --test                          Enable testing
+      --test-command <COMMAND>        Specify the test command to use in --test
+      --test-stdin <CONTENT>          Specify stdin content supplied to the test command in --test
+      --test-stdout <CONTENT>         Test stdout of the test command
+  -d, --dynamic                       Enable dynamic analysis
+      --dynamic-arg <ARG>             Specify arguments passed to the executable in --dynamic
+      --dynamic-stdin <CONTENT>       Specify stdin content supplied to the executable in --dynamic
+  -c, --compress                      Compress the executable with npx
+      --upx-arg <ARG>                 Specify arguments passed to upx in --compress
+      --busybox <PATH or NAME>        Specify the path or name of busybox that would be used in testing [default: busybox]
+      --upx <PATH or NAME>            Specify the path or name of upx that would be used in compression [default: upx]
+      --cc <PATH or NAME>             Specify the path or name of c compiler that would be used in the name resolution of shared library dependencies [env: CC=] [default: cc]
+      --experimental-noload-resolver  [EXPERIMENTAL] Resolve dynamic library paths without loading in dlopen(3)
+  -h, --help                          Print help information
 ```
 
 ### Docker images
@@ -94,7 +99,7 @@ We provide some base images that contain `magicpak` and its optional dependencie
 The following is a dockerfile using `magicpak` for a docker image of [`clang-format`](https://clang.llvm.org/docs/ClangFormat.html), a formatter for C/C++/etc. ([example/clang-format](/example/clang-format))
 
 ```dockerfile
-FROM magicpak/debian:buster-magicpak1.3.2
+FROM magicpak/debian:buster-magicpak1.4.0
 
 RUN apt-get -y update
 RUN apt-get -y --no-install-recommends install clang-format
@@ -124,6 +129,16 @@ This can be resolved by manually including the NSS-related shared libraries as s
 # example on x86_64 Debian-based image:
 RUN magicpak path/to/executable /bundle --include '/lib/x86_64-linux-gnu/libnss_*'
 ```
+
+### Note on jemalloc
+
+If your program depends on libjemalloc, magicpak may fail with the following message.
+
+```
+error: Unable to lookup shared library: /lib/aarch64-linux-gnu/libjemalloc.so.2: cannot allocate memory in static TLS block
+```
+
+You can use `--experimental-noload-resolver` flag to workaround this. See [#19](https://github.com/coord-e/magicpak/issues/19) for details.
 
 ## Disclaimer
 

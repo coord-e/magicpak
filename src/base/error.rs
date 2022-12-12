@@ -24,6 +24,8 @@ pub enum Error {
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     InvalidObjectPath(PathBuf),
+    DynamicWithMultipleInputsUnsupported,
+    TestWithMultipleInputsUnsupported,
     IO(io::Error),
 }
 
@@ -81,6 +83,12 @@ impl fmt::Display for Error {
             Error::InvalidObjectPath(p) => {
                 write!(f, "Invalid ELF object file path '{}'", p.display())
             }
+            Error::TestWithMultipleInputsUnsupported => {
+                write!(f, "use of --test with multiple inputs is not supported")
+            }
+            Error::DynamicWithMultipleInputsUnsupported => {
+                write!(f, "use of --dynamic with multiple inputs is not supported")
+            }
             Error::IO(e) => write!(f, "IO error: {}", e),
         }
     }
@@ -103,14 +111,8 @@ impl From<str::Utf8Error> for Error {
 impl From<goblin::Error> for Error {
     fn from(err: goblin::Error) -> Self {
         match err {
-            goblin::Error::Malformed(e) => Error::MalformedExecutable(e),
-            goblin::Error::BadMagic(e) => {
-                Error::MalformedExecutable(format!("unknown magic number: {}", e))
-            }
-            goblin::Error::Scroll(e) => {
-                Error::MalformedExecutable(format!("unable to read bytes: {}", e))
-            }
             goblin::Error::IO(e) => Error::IO(e),
+            e => Error::MalformedExecutable(e.to_string()),
         }
     }
 }

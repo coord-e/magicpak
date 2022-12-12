@@ -17,6 +17,7 @@ jobs:
       CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER: aarch64-linux-gnu-gcc
     steps:
       - uses: actions/checkout@v3
+      - run: sudo apt-get update
       - run: sudo apt-get install -y musl-tools busybox-static
       - run: sudo apt-get install -y gcc-aarch64-linux-gnu
         if: matrix.target == 'aarch64-unknown-linux-musl'
@@ -63,7 +64,7 @@ jobs:
       - run: docker buildx bake --push --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max'
         env:
           BIN_DIR: "./dist"
-          VERSION: "1.3.2"
+          VERSION: "1.4.0"
   release:
     name: Release
     runs-on: ubuntu-22.04

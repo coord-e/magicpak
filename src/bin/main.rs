@@ -1,67 +1,90 @@
 use std::path::PathBuf;
 
 use magicpak::action;
-use magicpak::base::Result;
+use magicpak::base::{Error, Result};
 use magicpak::domain::{Bundle, Executable};
 
 use clap::Parser;
 
-#[derive(Parser)]
-#[clap(name = "magicpak")]
-struct Args {
-    #[clap(value_name = "INPUT", parse(from_os_str))]
-    /// Input executable
-    input: PathBuf,
+#[derive(Debug, Clone, Copy, clap::ValueEnum)]
+#[value(rename_all = "PascalCase")]
+enum LogLevel {
+    Off,
+    Error,
+    Warn,
+    Info,
+    Debug,
+}
 
-    #[clap(value_name = "OUTPUT", parse(from_os_str))]
+impl LogLevel {
+    fn to_level_filter(self) -> tracing_subscriber::filter::LevelFilter {
+        use tracing_subscriber::filter::LevelFilter;
+        match self {
+            LogLevel::Off => LevelFilter::OFF,
+            LogLevel::Error => LevelFilter::ERROR,
+            LogLevel::Warn => LevelFilter::WARN,
+            LogLevel::Info => LevelFilter::INFO,
+            LogLevel::Debug => LevelFilter::DEBUG,
+        }
+    }
+}
+
+#[derive(Parser)]
+#[command(name = "magicpak")]
+struct Args {
+    #[arg(value_name = "INPUT", required = true)]
+    /// Input executable
+    input: Vec<PathBuf>,
+
+    #[arg(value_name = "OUTPUT")]
     /// Output destination
     output: PathBuf,
 
-    #[clap(short, long, value_name = "GLOB")]
+    #[arg(short, long, value_name = "GLOB")]
     /// Additionally include files/directories with glob patterns
     include: Vec<String>,
 
-    #[clap(short, long, value_name = "GLOB")]
+    #[arg(short, long, value_name = "GLOB")]
     /// Exclude files/directories from the resulting bundle with glob patterns
     exclude: Vec<String>,
 
-    #[clap(long, value_name = "PATH")]
+    #[arg(long, value_name = "PATH")]
     /// Make directories in the resulting bundle
     mkdir: Vec<String>,
 
-    #[clap(short = 'r', long, value_name = "PATH")]
+    #[arg(short = 'r', long, value_name = "PATH")]
     /// Specify the installation path of the executable in the bundle
     install_to: Option<String>,
 
-    #[clap(long, value_name = "LEVEL", default_value = "Warn", possible_values = &["Off", "Error", "Warn", "Info", "Debug"])]
+    #[arg(long, value_name = "LEVEL", default_value = "Warn")]
     /// Specify the log level
-    log_level: tracing_subscriber::filter::LevelFilter,
+    log_level: LogLevel,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Verbose mode, same as --log-level Info
     verbose: bool,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Enable testing
     test: bool,
 
-    #[clap(long, value_name = "COMMAND")]
+    #[arg(long, value_name = "COMMAND")]
     /// Specify the test command to use in --test
     test_command: Option<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Specify stdin content supplied to the test command in --test
     test_stdin: Option<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Test stdout of the test command
     test_stdout: Option<String>,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Enable dynamic analysis
     dynamic: bool,
 
-    #[clap(
+    #[arg(
         long,
         value_name = "ARG",
         allow_hyphen_values = true,
@@ -70,15 +93,15 @@ struct Args {
     /// Specify arguments passed to the executable in --dynamic
     dynamic_arg: Vec<String>,
 
-    #[clap(long, value_name = "CONTENT")]
+    #[arg(long, value_name = "CONTENT")]
     /// Specify stdin content supplied to the executable in --dynamic
     dynamic_stdin: Option<String>,
 
-    #[clap(short, long)]
+    #[arg(short, long)]
     /// Compress the executable with npx
     compress: bool,
 
-    #[clap(
+    #[arg(
         long,
         value_name = "ARG",
         allow_hyphen_values = true,
@@ -87,47 +110,73 @@ struct Args {
     /// Specify arguments passed to upx in --compress
     upx_arg: Vec<String>,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "busybox")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "busybox")]
     /// Specify the path or name of busybox that would be used in testing
     busybox: String,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "upx")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "upx")]
     /// Specify the path or name of upx that would be used in compression
     upx: String,
 
-    #[clap(long, value_name = "PATH or NAME", default_value = "cc", env = "CC")]
+    #[arg(long, value_name = "PATH or NAME", default_value = "cc", env = "CC")]
     /// Specify the path or name of c compiler that would be used in
     /// the name resolution of shared library dependencies
     cc: String,
+
+    #[clap(long)]
+    /// [EXPERIMENTAL] Resolve dynamic library paths without loading in dlopen(3).
+    experimental_noload_resolver: bool,
 }
 
 fn run(args: &Args) -> Result<()> {
     let mut bundle = Bundle::new();
-    let mut exe = Executable::load(&args.input)?;
+    let mut exes = args
+        .input
+        .iter()
+        .map(Executable::load)
+        .collect::<Result<Vec<_>>>()?;
 
-    action::bundle_shared_object_dependencies(&mut bundle, &exe, &args.cc)?;
+    for exe in &exes {
+        if args.experimental_noload_resolver {
+            action::bundle_shared_object_dependencies_noload(&mut bundle, exe, &args.cc)?;
+        } else {
+            action::bundle_shared_object_dependencies(&mut bundle, exe, &args.cc)?;
+        }
+    }
 
     if args.dynamic {
+        let &[ref exe] = &exes[..] else {
+            return Err(Error::DynamicWithMultipleInputsUnsupported);
+        };
+
         action::bundle_dynamic_dependencies(
             &mut bundle,
-            &exe,
+            exe,
             &args.dynamic_arg,
             args.dynamic_stdin.as_ref(),
         )?;
     }
 
     if args.compress {
-        action::compress_exexcutable(&mut exe, &args.upx, &args.upx_arg)?;
+        for exe in &mut exes {
+            action::compress_exexcutable(exe, &args.upx, &args.upx_arg)?;
+        }
     }
 
-    action::bundle_executable(&mut bundle, &exe, &args.input, args.install_to.as_ref())?;
+    for (exe, input) in exes.iter().zip(&args.input) {
+        action::bundle_executable(&mut bundle, exe, input, args.install_to.as_ref())?;
+    }
 
     for dir in &args.mkdir {
         action::make_directory(&mut bundle, dir);
     }
 
     for glob in &args.include {
-        action::include_glob(&mut bundle, glob, &args.cc)?;
+        if args.experimental_noload_resolver {
+            action::include_glob_noload(&mut bundle, glob, &args.cc)?;
+        } else {
+            action::include_glob(&mut bundle, glob, &args.cc)?;
+        }
     }
 
     for glob in &args.exclude {
@@ -135,9 +184,13 @@ fn run(args: &Args) -> Result<()> {
     }
 
     if args.test {
+        let &[ref exe] = &exes[..] else {
+            return Err(Error::TestWithMultipleInputsUnsupported);
+        };
+
         action::test(
             &bundle,
-            &exe,
+            exe,
             args.test_command.as_ref(),
             args.test_stdin.as_ref(),
             args.test_stdout.as_ref(),
@@ -156,7 +209,7 @@ fn main() {
     let level_filter = if args.verbose {
         tracing_subscriber::filter::LevelFilter::INFO
     } else {
-        args.log_level
+        args.log_level.to_level_filter()
     };
 
     use tracing_subscriber::{layer::SubscriberExt as _, util::SubscriberInitExt as _};
