@@ -162,7 +162,19 @@ fn sync_copy(from: &Path, to: &BundlePath, dest: &Path) -> Result<()> {
             target = %target.display(),
             "emit: link",
         );
-        unix::fs::symlink(&link_dest_absolute, target)?;
+        match target.read_link() {
+            // the bundle may contain an entry that symlinks to `target`
+            Ok(target_link_dest) if target_link_dest == link_dest_absolute => {
+                tracing::debug!(
+                    link = %link_dest_absolute.display(),
+                    target = %target.display(),
+                    "emit: already linked, skipping",
+                );
+            }
+            _ => {
+                unix::fs::symlink(&link_dest_absolute, target)?;
+            }
+        }
         sync_copy(
             &link_dest_absolute,
             BundlePath::projection(&link_dest_absolute),
@@ -277,6 +289,42 @@ mod tests {
 
         dest.child("a.txt").assert("hello1");
         dest.child("b.txt").assert(predicate::path::missing());
+        Ok(())
+    }
+
+    #[test]
+    fn test_chained_sync_copy_link() -> std::result::Result<(), Box<dyn std::error::Error>> {
+        // z.txt -> y.txt -> x.txt
+        // and more than one of these paths are added to bundle
+
+        let dest = assert_fs::TempDir::new()?;
+
+        let src_dir = assert_fs::TempDir::new()?;
+        let src = src_dir.child("x.txt");
+        src.touch()?;
+        src.write_str("hello")?;
+        let link1 = src_dir.child("y.txt");
+        unix::fs::symlink(src.path(), link1.path())?;
+        let link2 = src_dir.child("z.txt");
+        unix::fs::symlink(link1.path(), link2.path())?;
+
+        sync_copy(src.path(), BundlePath::projection(&src), dest.path())?;
+        sync_copy(link1.path(), BundlePath::projection(&link1), dest.path())?;
+        sync_copy(link2.path(), BundlePath::projection(&link2), dest.path())?;
+
+        assert!(matches!(
+            dest.child(link1.path()).path().read_link(),
+            Ok(link_dest)
+            if link_dest == src.path()
+        ));
+        assert!(matches!(
+            dest.child(link2.path()).path().read_link(),
+            Ok(link_dest)
+            if link_dest == link1.path()
+        ));
+        dest.child(src.path())
+            .assert(predicate::path::is_file())
+            .assert("hello");
         Ok(())
     }
 }
