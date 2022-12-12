@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use magicpak::action;
-use magicpak::base::Result;
+use magicpak::base::{Error, Result};
 use magicpak::domain::{Bundle, Executable};
 
 use clap::Parser;
@@ -32,9 +32,9 @@ impl LogLevel {
 #[derive(Parser)]
 #[command(name = "magicpak")]
 struct Args {
-    #[arg(value_name = "INPUT")]
+    #[arg(value_name = "INPUT", required = true)]
     /// Input executable
-    input: PathBuf,
+    input: Vec<PathBuf>,
 
     #[arg(value_name = "OUTPUT")]
     /// Output destination
@@ -126,24 +126,38 @@ struct Args {
 
 fn run(args: &Args) -> Result<()> {
     let mut bundle = Bundle::new();
-    let mut exe = Executable::load(&args.input)?;
+    let mut exes = args
+        .input
+        .iter()
+        .map(Executable::load)
+        .collect::<Result<Vec<_>>>()?;
 
-    action::bundle_shared_object_dependencies(&mut bundle, &exe, &args.cc)?;
+    for exe in &exes {
+        action::bundle_shared_object_dependencies(&mut bundle, exe, &args.cc)?;
+    }
 
     if args.dynamic {
+        let &[ref exe] = &exes[..] else {
+            return Err(Error::DynamicWithMultipleInputsUnsupported);
+        };
+
         action::bundle_dynamic_dependencies(
             &mut bundle,
-            &exe,
+            exe,
             &args.dynamic_arg,
             args.dynamic_stdin.as_ref(),
         )?;
     }
 
     if args.compress {
-        action::compress_exexcutable(&mut exe, &args.upx, &args.upx_arg)?;
+        for exe in &mut exes {
+            action::compress_exexcutable(exe, &args.upx, &args.upx_arg)?;
+        }
     }
 
-    action::bundle_executable(&mut bundle, &exe, &args.input, args.install_to.as_ref())?;
+    for (exe, input) in exes.iter().zip(&args.input) {
+        action::bundle_executable(&mut bundle, exe, input, args.install_to.as_ref())?;
+    }
 
     for dir in &args.mkdir {
         action::make_directory(&mut bundle, dir);
@@ -158,9 +172,13 @@ fn run(args: &Args) -> Result<()> {
     }
 
     if args.test {
+        let &[ref exe] = &exes[..] else {
+            return Err(Error::TestWithMultipleInputsUnsupported);
+        };
+
         action::test(
             &bundle,
-            &exe,
+            exe,
             args.test_command.as_ref(),
             args.test_stdin.as_ref(),
             args.test_stdout.as_ref(),

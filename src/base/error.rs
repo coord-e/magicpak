@@ -24,6 +24,8 @@ pub enum Error {
     Encoding(str::Utf8Error),
     PathEncoding(OsString),
     InvalidObjectPath(PathBuf),
+    DynamicWithMultipleInputsUnsupported,
+    TestWithMultipleInputsUnsupported,
     IO(io::Error),
 }
 
@@ -80,6 +82,12 @@ impl fmt::Display for Error {
             ),
             Error::InvalidObjectPath(p) => {
                 write!(f, "Invalid ELF object file path '{}'", p.display())
+            }
+            Error::TestWithMultipleInputsUnsupported => {
+                write!(f, "use of --test with multiple inputs is not supported")
+            }
+            Error::DynamicWithMultipleInputsUnsupported => {
+                write!(f, "use of --dynamic with multiple inputs is not supported")
             }
             Error::IO(e) => write!(f, "IO error: {}", e),
         }
