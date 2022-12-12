@@ -62,4 +62,4 @@ jobs:
         run: docker buildx bake --set '*.cache-from=type=gha' --set '*.cache-to=type=gha,mode=max' --set 'base.platform=linux/amd64' example
         env:
           BIN_DIR: ./dist
-          VERSION: 1.3.2
+          VERSION: 1.4.0
