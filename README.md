@@ -54,28 +54,33 @@ The size of the resulting image is our main concern. `magicpak` supports executa
 ### Supported options
 
 ```
-  magicpak [OPTIONS] <INPUT> <OUTPUT>
+Usage: magicpak [OPTIONS] <INPUT>... <OUTPUT>
 
-    -r, --install-to <PATH>          Specify the installation path of the executable in the bundle
-    -e, --exclude <GLOB>...          Exclude files/directories from the resulting bundle with glob patterns
-    -i, --include <GLOB>...          Additionally include files/directories with glob patterns
-        --mkdir <PATH>...            Make directories in the resulting bundle
-    -d, --dynamic                    Enable dynamic analysis
-        --dynamic-arg <ARG>...       Specify arguments passed to the executable in --dynamic
-        --dynamic-stdin <CONTENT>    Specify stdin content supplied to the executable in --dynamic
-    -t, --test                       Enable testing
-        --test-command <COMMAND>     Specify the test command to use in --test
-        --test-stdin <CONTENT>       Specify stdin content supplied to the test command in --test
-        --test-stdout <CONTENT>      Test stdout of the test command
-    -c, --compress                   Compress the executable with npx
-        --upx-arg <ARG>...           Specify arguments passed to upx in --compress
-        --upx <PATH or NAME>         Specify the path or name of upx that would be used in compression
-        --busybox <PATH or NAME>     Specify the path or name of busybox that would be used in testing
-        --cc <PATH or NAME>          Specify the path or name of c compiler
-        --log-level <LEVEL>          Specify the log level
-    -v, --verbose                    Verbose mode, same as --log-level Info
-    -h, --help                       Prints help information
-    -V, --version                    Prints version information
+Arguments:
+  <INPUT>...  Input executable
+  <OUTPUT>    Output destination
+
+Options:
+  -i, --include <GLOB>                Additionally include files/directories with glob patterns
+  -e, --exclude <GLOB>                Exclude files/directories from the resulting bundle with glob patterns
+      --mkdir <PATH>                  Make directories in the resulting bundle
+  -r, --install-to <PATH>             Specify the installation path of the executable in the bundle
+      --log-level <LEVEL>             Specify the log level [default: Warn] [possible values: Off, Error, Warn, Info, Debug]
+  -v, --verbose                       Verbose mode, same as --log-level Info
+  -t, --test                          Enable testing
+      --test-command <COMMAND>        Specify the test command to use in --test
+      --test-stdin <CONTENT>          Specify stdin content supplied to the test command in --test
+      --test-stdout <CONTENT>         Test stdout of the test command
+  -d, --dynamic                       Enable dynamic analysis
+      --dynamic-arg <ARG>             Specify arguments passed to the executable in --dynamic
+      --dynamic-stdin <CONTENT>       Specify stdin content supplied to the executable in --dynamic
+  -c, --compress                      Compress the executable with npx
+      --upx-arg <ARG>                 Specify arguments passed to upx in --compress
+      --busybox <PATH or NAME>        Specify the path or name of busybox that would be used in testing [default: busybox]
+      --upx <PATH or NAME>            Specify the path or name of upx that would be used in compression [default: upx]
+      --cc <PATH or NAME>             Specify the path or name of c compiler that would be used in the name resolution of shared library dependencies [env: CC=] [default: cc]
+      --experimental-noload-resolver  [EXPERIMENTAL] Resolve dynamic library paths without loading in dlopen(3)
+  -h, --help                          Print help information
 ```
 
 ### Docker images
