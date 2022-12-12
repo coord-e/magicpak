@@ -125,6 +125,16 @@ This can be resolved by manually including the NSS-related shared libraries as s
 RUN magicpak path/to/executable /bundle --include '/lib/x86_64-linux-gnu/libnss_*'
 ```
 
+### Note on jemalloc
+
+If your program depends on libjemalloc, magicpak may fail with the following message.
+
+```
+error: Unable to lookup shared library: /lib/aarch64-linux-gnu/libjemalloc.so.2: cannot allocate memory in static TLS block
+```
+
+You can use `--experimental-noload-resolver` flag to workaround this. See [#19](https://github.com/coord-e/magicpak/issues/19) for details.
+
 ## Disclaimer
 
 `magicpak` comes with absolutely no warranty. There's no guarantee that the processed bundle works properly and identically to the original executable. Although I had no problem using `magicpak` for building various kinds of images, it is recommended to use this with caution and make a careful examination of the resulting bundle.
