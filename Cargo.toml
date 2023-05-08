@@ -31,5 +31,5 @@ which = "4.4"
 
 [dev-dependencies]
 assert_cmd = "2"
-assert_fs = "1.0.10"
+assert_fs = "1.0.13"
 predicates = "3"
